@@ -1,0 +1,131 @@
+---
+title: "Exercício 9"
+author: "Gabriel Sanábio Mazzetti Affonso"
+date: today
+format: 
+  html:
+    toc: true
+    theme: cosmos
+    embed-resources: true
+    code-fold: true
+editor: visual
+---
+
+# Enunciado
+
+Seja $X_1, X_2, \dots, X_n$ uma amostra aleatória (a.a.) de uma população $X \sim N(\mu, \sigma^2)$, com $\sigma^2$ conhecido.
+
+a) Encontre a Informação de Fisher $I_X(\mu)$.
+
+b) Se $\tau(\mu) = \mu$, determine o limite inferior de Cramér-Rao.
+
+c) Com base nos cálculos, proponha um ENVVMU para a média populacional $\mu$.
+
+## a) Informação de Fisher $I_X(\mu)$
+
+A Informação de Fisher para um parâmetro $\mu$ é dada por $I(\mu) = -E\left[\frac{\partial^2}{\partial \mu^2} \ln f(X; \mu)\right]$.
+
+**1. Função de Densidade de Probabilidade (fdp)**
+A fdp de uma distribuição Normal $N(\mu, \sigma^2)$ é:
+$$
+f(x; \mu) = \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left\{-\frac{(x-\mu)^2}{2\sigma^2}\right\}
+$$
+
+**2. Log-Verossimilhança**
+Calculamos o logaritmo natural da fdp (log-verossimilhança para uma observação):
+$$
+\ln f(x; \mu) = \ln\left((2\pi\sigma^2)^{-1/2}\right) - \frac{(x-\mu)^2}{2\sigma^2}
+$$
+$$
+\ln f(x; \mu) = -\frac{1}{2}\ln(2\pi\sigma^2) - \frac{(x-\mu)^2}{2\sigma^2}
+$$
+
+**3. Primeira Derivada (Função Escore)**
+Derivamos a log-verossimilhança em relação a $\mu$:
+$$
+\frac{\partial}{\partial \mu} \ln f(x; \mu) = 0 - \frac{1}{2\sigma^2} \cdot 2(x-\mu) \cdot (-1) = \frac{x-\mu}{\sigma^2}
+$$
+
+**4. Segunda Derivada**
+Derivamos novamente em relação a $\mu$:
+$$
+\frac{\partial^2}{\partial \mu^2} \ln f(x; \mu) = \frac{\partial}{\partial \mu} \left(\frac{x-\mu}{\sigma^2}\right) = -\frac{1}{\sigma^2}
+$$
+
+**5. Cálculo da Informação de Fisher**
+Finalmente, calculamos a esperança do negativo da segunda derivada:
+$$
+I_X(\mu) = -E\left[-\frac{1}{\sigma^2}\right]
+$$
+Como $-\frac{1}{\sigma^2}$ é uma constante (lembre-se que $\sigma^2$ é conhecido), a esperança de uma constante é a própria constante.
+$$
+I_X(\mu) = - \left(-\frac{1}{\sigma^2}\right) = \frac{1}{\sigma^2}
+$$
+Portanto, a Informação de Fisher para uma única observação é:
+$$
+I_X(\mu) = \frac{1}{\sigma^2}
+$$
+
+## b) Limite Inferior de Cramér-Rao (LIDCR)
+
+O Limite Inferior de Cramér-Rao (LIDCR) para um estimador não viciado de uma função $\tau(\mu)$ é dado por:
+$$
+LIDCR = \frac{[\tau'(\mu)]^2}{n \cdot I_X(\mu)}
+$$
+Neste caso, a função de interesse é $\tau(\mu) = \mu$.
+
+**1. Derivada de $\tau(\mu)$**
+$$
+\tau'(\mu) = \frac{d}{d\mu}(\mu) = 1
+$$
+
+**2. Cálculo do LIDCR**
+Substituindo os valores na fórmula:
+$$
+LIDCR = \frac{1^2}{n \cdot \left(\frac{1}{\sigma^2}\right)} = \frac{1}{n/\sigma^2} = \frac{\sigma^2}{n}
+$$
+O limite inferior de Cramér-Rao para qualquer estimador não viciado de $\mu$ é $\frac{\sigma^2}{n}$. Isso significa que a menor variância que um estimador não viciado de $\mu$ pode ter é $\frac{\sigma^2}{n}$.
+
+## c) Proposta de um ENVVMU para $\mu$
+
+Um Estimador Não Viciado de Variância Mínima Uniforme (ENVVMU) é um estimador que é não viciado e cuja variância atinge o limite inferior de Cramér-Rao para todos os valores do parâmetro.
+
+**1. Proposta de Estimador**
+O estimador mais natural para a média populacional $\mu$ é a média amostral, $\bar{X}$.
+$$
+\hat{\mu} = \bar{X} = \frac{1}{n} \sum_{i=1}^{n} X_i
+$$
+
+**2. Verificação do Vício**
+Vamos verificar se $\bar{X}$ é não viciado para $\mu$.
+$$
+E[\hat{\mu}] = E[\bar{X}] = E\left[\frac{1}{n} \sum X_i\right] = \frac{1}{n} \sum E[X_i]
+$$
+Como cada $X_i \sim N(\mu, \sigma^2)$, temos $E[X_i] = \mu$.
+$$
+E[\hat{\mu}] = \frac{1}{n} \sum_{i=1}^{n} \mu = \frac{1}{n} (n\mu) = \mu
+$$
+Concluímos que $\bar{X}$ é um estimador **não viciado** para $\mu$.
+
+**3. Cálculo da Variância**
+Agora, calculamos a variância de $\bar{X}$.
+$$
+Var(\hat{\mu}) = Var(\bar{X}) = Var\left(\frac{1}{n} \sum X_i\right)
+$$
+Como as observações $X_i$ são de uma amostra aleatória, elas são independentes. Portanto:
+$$
+Var(\hat{\mu}) = \frac{1}{n^2} \sum Var(X_i)
+$$
+Como cada $X_i \sim N(\mu, \sigma^2)$, temos $Var(X_i) = \sigma^2$.
+$$
+Var(\hat{\mu}) = \frac{1}{n^2} \sum_{i=1}^{n} \sigma^2 = \frac{1}{n^2} (n\sigma^2) = \frac{\sigma^2}{n}
+$$
+
+**4. Conclusão**
+Comparamos a variância do nosso estimador com o limite inferior de Cramér-Rao:
+* $Var(\bar{X}) = \frac{\sigma^2}{n}$
+* $LIDCR = \frac{\sigma^2}{n}$
+
+Como a média amostral $\bar{X}$ é um estimador não viciado para $\mu$ e sua variância é igual ao limite inferior de Cramér-Rao, podemos concluir que:
+
+**A média amostral, $\bar{X}$, é o Estimador Não Viciado de Variância Mínima Uniforme (ENVVMU) para $\mu$.**

@@ -1,0 +1,118 @@
+---
+title: "Resumo de ENVVMU"
+author: "Gabriel Sanábio Mazzetti Affonso"
+date: today
+format: 
+  html:
+    toc: true
+    theme: cosmos
+    embed-resources: true
+    code-fold: true
+editor: visual
+---
+
+# Resumo sobre Estimadores Não Viciados de Variância Mínima Uniforme (ENVVMU)
+
+Este documento resume os conceitos fundamentais sobre o **Estimador Não Viciado de Variância Mínima Uniforme (ENVVMU)**, com base nas notas de aula fornecidas. O objetivo é revisar a teoria e os métodos para encontrar o "melhor" estimador dentro da classe de estimadores não viciados.
+
+---
+
+### 1. O que é um ENVVMU?
+
+O ENVVMU (ou UMVUE, *Uniformly Minimum Variance Unbiased Estimator*) é considerado o estimador ótimo na classe de estimadores não viciados, pois possui a menor variância possível, independentemente do verdadeiro valor do parâmetro.
+
+#### Definição Formal
+
+Um estimador $T$ é um ENVVMU para uma função de parâmetros $\tau(\theta)$ se:
+1.  **Não é Viciado:** $E(T) = \tau(\theta)$ para todo $\theta$.
+2.  **Possui Variância Mínima Uniforme:** Para qualquer outro estimador não viciado $T^*$, a seguinte condição é válida: $Var(T) \le Var(T^*)$ para todo $\theta$.
+
+#### Características de um Bom Estimador
+Para que um estimador tenha boas propriedades, ele deve ser função de estatísticas que sejam:
+* **Suficiente:** Contém toda a informação relevante sobre o parâmetro $\theta$ presente na amostra.
+* **Completa:** Garante que a estatística não carrega nenhuma informação ancilar (irrelevante) sobre $\theta$.
+* **Minimal:** Representa a maior redução de dados possível sem perda de informação (suficiência).
+
+---
+
+### 2. Métodos para Encontrar o ENVVMU
+
+Existem duas abordagens principais para encontrar e validar um ENVVMU.
+
+#### Método I: O Limite Inferior de Cramér-Rao (LIDCR)
+
+Este método estabelece um "piso" para a variância de qualquer estimador não viciado. Se um estimador atinge esse limite, ele é, por definição, um ENVVMU.
+
+A **desigualdade de Cramér-Rao** é dada por:
+$$
+Var(T) \ge \frac{[\tau'(\theta)]^2}{I(\theta)}
+$$
+
+Onde:
+* $T$ é um estimador não viciado de $\tau(\theta)$.
+* $I(\theta)$ é a **Informação de Fisher**, que mede a quantidade de informação que a amostra carrega sobre $\theta$. É calculada como:
+    $$
+    I(\theta) = E\left[\left(\frac{\partial}{\partial\theta} \log f(X|\theta)\right)^2\right] = -E\left[\frac{\partial^2}{\partial\theta^2} \log f(X|\theta)\right]
+    $$
+
+**Passos:**
+1.  Verificar se as condições de regularidade são satisfeitas.
+2.  Calcular a Informação de Fisher $I(\theta)$.
+3.  Calcular o LIDCR para $\tau(\theta)$.
+4.  Encontrar um estimador não viciado $T$ para $\tau(\theta)$ e calcular sua variância.
+5.  Se $Var(T)$ for igual ao LIDCR, então $T$ é o ENVVMU.
+
+**Limitação:** Se um estimador não atinge o LIDCR, isso **não** significa que ele não seja o ENVVMU. Pode ser que nenhum estimador atinja o limite.
+
+#### Método II: Teoremas de Rao-Blackwell e Lehmann-Scheffé
+
+Esta abordagem é mais construtiva e geralmente mais poderosa.
+
+**1. Teorema de Rao-Blackwell**
+Permite "melhorar" um estimador. Dado um estimador não viciado qualquer, $T$, e uma estatística suficiente, $S$, o novo estimador $T^* = E(T|S)$ será:
+* Também não viciado para o mesmo parâmetro.
+* Com variância menor ou igual: $Var(T^*) \le Var(T)$.
+
+Este teorema nos diz que devemos procurar nosso ENVVMU entre as funções de estatísticas suficientes.
+
+**2. Teorema de Lehmann-Scheffé**
+Este é o resultado principal e o método mais eficaz. Ele afirma:
+> Se $S$ é uma estatística **suficiente e completa** para $\theta$, e $T = g(S)$ é um estimador não viciado para $\tau(\theta)$ que é função de $S$, então $T$ é o **único** ENVVMU de $\tau(\theta)$.
+
+**Passos:**
+1.  Encontre uma estatística $S$ que seja **suficiente e completa** para $\theta$.
+2.  Encontre uma função de $S$, digamos $g(S)$, tal que seu valor esperado seja $\tau(\theta)$.
+3.  Se encontrar, pode concluir que $T = g(S)$ é o ENVVMU.
+
+---
+
+### 3. Exercícios das Notas de Aula
+
+* **Poisson($\theta$):** Encontrar LIDCR para $\theta$ e $\theta^2$. Mostrar que $\bar{X}$ é o ENVVMU para $\theta$. Encontrar o ENVVMU para $e^{-\theta}$.
+* **Normal($\mu, \sigma^2$):** Encontrar LIDCR para $\mu$ e $\sigma^2$. Mostrar que $\bar{X}$ é o ENVVMU para $\mu$ (com $\sigma^2$ conhecida). Encontrar ENVVMU para $\sigma^2$ e para $P(X \le c)$.
+* **Exponencial($\theta$):** Encontrar o ENVVMU para $1/\theta$ e para $\theta$.
+* **Bernoulli($\theta$):** Encontrar o ENVVMU para $\theta$.
+* **Binomial($k, \theta$):** Encontrar o ENVVMU para $P(X=1)$.
+
+---
+
+### 4. Novos Exercícios para Prática
+
+**Exercício Proposto 1: Distribuição Normal**
+Seja $X_1, ..., X_n$ uma amostra de uma Normal($\mu, \sigma^2$), com $\sigma^2$ **conhecido**.
+a) Encontre uma estatística suficiente e completa para $\mu$.
+b) Sabendo que $E[\bar{X}^2] = \frac{\sigma^2}{n} + \mu^2$, encontre o ENVVMU para $\tau(\mu) = \mu^2$.
+
+**Exercício Proposto 2: Distribuição Uniforme**
+Seja $X_1, ..., X_n$ uma amostra de uma Uniforme$(0, \theta)$. A estatística $X_{(n)} = \max(X_1, ..., X_n)$ é suficiente e completa para $\theta$. A f.d.p. de $X_{(n)}$ é $f(y) = \frac{ny^{n-1}}{\theta^n}$ para $0 < y < \theta$.
+a) Calcule $E[X_{(n)}]$.
+b) Use o resultado para encontrar o ENVVMU para $\theta$.
+
+**Exercício Proposto 3: Distribuição Binomial**
+Seja $S = \sum X_i \sim \text{Binomial}(n, \theta)$, onde $X_i$ são i.i.d. Bernoulli($\theta$). $S$ é suficiente e completa para $\theta$. Encontre o ENVVMU para a variância, $\tau(\theta) = \theta(1-\theta)$.
+*Dica:* Calcule $E[S(n-S)]$ e ajuste para obter um estimador não viciado.
+
+**Exercício Proposto 4: Distribuição Exponencial**
+Seja $X_1, ..., X_n$ uma amostra de uma Exponencial com média $\theta$. Deseja-se estimar $\tau(\theta) = P(X > k) = e^{-k/\theta}$.
+a) Use o estimador inicial $T = I(X_1 > k)$, onde $I(\cdot)$ é a função indicadora.
+b) Use o Teorema de Rao-Blackwell para encontrar o ENVVMU, condicionando $T$ na estatística suficiente e completa $S = \sum X_i$.

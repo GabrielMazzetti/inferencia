@@ -1,0 +1,207 @@
+---
+title: "Estudo de Simulação: Intervalos de Confiança para a Proporção p"
+author: "Gabriel Sanábio Mazzetti Affonso"
+date: today
+format: 
+  html:
+    toc: true
+    theme: cosmos
+    embed-resources: true
+    code-fold: true
+editor: visual
+---
+
+## Introdução
+
+Neste exercício, o objetivo é comparar o desempenho de três métodos de construção de intervalos de confiança para a proporção populacional $p$.\
+A comparação é feita com base em duas métricas principais: **a probabilidade de cobertura empírica** e **a largura média dos intervalos**.\
+Para cada combinação de $p$ e $n$, serão realizadas diversas simulações, de forma a avaliar a performance de cada estimador.
+
+------------------------------------------------------------------------
+
+## Metodologia
+
+Os parâmetros definidos para o estudo são os seguintes:
+
+-   Proporções:\
+    $$p \in \{0.01, 0.05, 0.1, 0.2, 0.5, 0.8, 0.95, 0.99\}$$
+
+-   Tamanhos amostrais:\
+    $$n \in \{10, 30, 50, 100, 500\}$$
+
+-   Nível de confiança:\
+    $$1 - \alpha = 0.95 \Rightarrow z_{\alpha/2} = 1.96$$
+
+-   Número de simulações:\
+    $$M = 10000$$
+
+Para cada combinação $(p, n)$, geram-se $M$ amostras da variável aleatória $X_i \sim Bernoulli(p)$, com:
+
+$$
+\hat{p} = \frac{1}{n}\sum_{i=1}^{n} X_i
+$$
+
+Em seguida, são construídos três intervalos de confiança distintos:
+
+------------------------------------------------------------------------
+
+### 1. Intervalo de Wald
+
+$$
+IC_{Wald} = \hat{p} \pm z_{\alpha/2} \sqrt{\frac{\hat{p}(1 - \hat{p})}{n}}
+$$
+
+------------------------------------------------------------------------
+
+### 2. Intervalo com Transformação Arcseno
+
+$$
+IC_{arcseno} = \left[
+\sin^2\left(\arcsin(\sqrt{\hat{p}}) - \frac{z_{\alpha/2}}{2\sqrt{n}}\right),
+\sin^2\left(\arcsin(\sqrt{\hat{p}}) + \frac{z_{\alpha/2}}{2\sqrt{n}}\right)
+\right]
+$$
+
+------------------------------------------------------------------------
+
+### 3. Intervalo Conservador
+
+$$
+IC_{cons} = \hat{p} \pm \frac{z_{\alpha/2}}{2\sqrt{n}}
+$$
+
+------------------------------------------------------------------------
+
+Para cada caso, calcula-se:
+
+-   A **cobertura empírica**, definida como a proporção de intervalos que contêm o verdadeiro valor de $p$;
+-   A **largura média** dos intervalos obtidos.
+
+------------------------------------------------------------------------
+
+## Implementação em R
+
+```{r, warning=FALSE}
+set.seed(123)
+
+# Parâmetros
+p_values <- c(0.01, 0.05, 0.1, 0.2, 0.5, 0.8, 0.95, 0.99)
+n_values <- c(10, 30, 50, 100, 500)
+M <- 10000
+z <- qnorm(0.975)
+
+# Funções dos intervalos
+IC_wald <- function(phat, n) {
+  erro <- z * sqrt(phat * (1 - phat) / n)
+  cbind(phat - erro, phat + erro)
+}
+
+IC_arcseno <- function(phat, n) {
+  lower <- sin(asin(sqrt(phat)) - z / (2 * sqrt(n)))^2
+  upper <- sin(asin(sqrt(phat)) + z / (2 * sqrt(n)))^2
+  cbind(lower, upper)
+}
+
+IC_conservador <- function(phat, n) {
+  erro <- z / (2 * sqrt(n))
+  cbind(phat - erro, phat + erro)
+}
+
+# Simulação
+resultados <- data.frame()
+
+for (p in p_values) {
+  for (n in n_values) {
+    
+    X <- matrix(rbinom(M * n, 1, p), ncol = n)
+    phat <- rowMeans(X)
+    
+    wald <- IC_wald(phat, n)
+    arcs <- IC_arcseno(phat, n)
+    cons <- IC_conservador(phat, n)
+    
+    # Cobertura
+    cob_wald <- mean(wald[,1] <= p & p <= wald[,2])
+    cob_arcs <- mean(arcs[,1] <= p & p <= arcs[,2])
+    cob_cons <- mean(cons[,1] <= p & p <= cons[,2])
+    
+    # Largura média
+    larg_wald <- mean(wald[,2] - wald[,1])
+    larg_arcs <- mean(arcs[,2] - arcs[,1])
+    larg_cons <- mean(cons[,2] - cons[,1])
+    
+    # Armazenar resultados
+    resultados <- rbind(resultados,
+                        data.frame(p, n,
+                                   cobertura_wald = cob_wald,
+                                   cobertura_arcs = cob_arcs,
+                                   cobertura_cons = cob_cons,
+                                   largura_wald = larg_wald,
+                                   largura_arcs = larg_arcs,
+                                   largura_cons = larg_cons))
+  }
+}
+```
+
+## Resultados obtidos
+
+A partir das simulações realizadas, obteve-se as coberturas empíricas e as larguras médias dos intervalos de confiança para os métodos **Wald**, **Arcseno** e **Conservador**, considerando diferentes tamanhos amostrais (n) e proporções verdadeiras (p).
+
+Os gráficos a seguir ilustram o comportamento das coberturas empíricas e das larguras médias dos intervalos.
+
+```{r, warning=FALSE, message=FALSE}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+resultados_long <- resultados %>%
+  pivot_longer(cols = starts_with("cobertura"),
+               names_to = "metodo",
+               values_to = "cobertura") %>%
+  mutate(metodo = recode(metodo,
+                         cobertura_wald = "Wald",
+                         cobertura_arcs = "Arcseno",
+                         cobertura_cons = "Conservador"))
+
+ggplot(resultados_long, aes(x = p, y = cobertura, color = metodo)) +
+  geom_line(size = 1.1) +
+  facet_wrap(~ n, scales = "free_y") +
+  geom_hline(yintercept = 0.95, linetype = "dashed", color = "black") +
+  labs(title = "Cobertura Empírica dos Intervalos de Confiança",
+       x = "Proporção verdadeira (p)",
+       y = "Cobertura Empírica") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+#largura média
+resultados_long2 <- resultados %>%
+pivot_longer(cols = starts_with("largura"),
+names_to = "metodo",
+values_to = "largura") %>%
+mutate(metodo = recode(metodo,
+largura_wald = "Wald",
+largura_arcs = "Arcseno",
+largura_cons = "Conservador"))
+
+ggplot(resultados_long2, aes(x = p, y = largura, color = metodo)) +
+geom_line(size = 1.1) +
+facet_wrap(~ n, scales = "free_y") +
+labs(title = "Largura Média dos Intervalos de Confiança",
+x = "Proporção verdadeira (p)",
+y = "Largura Média") +
+theme_minimal() +
+theme(legend.position = "bottom")
+
+```
+
+## Conclusão
+
+Ao analisar conjuntamente as métricas de cobertura e largura média, conclui-se que não há um método universalmente superior, mas sim diferentes compromissos entre precisão e segurança estatística:
+
+O **método de Wald** é o mais eficiente (intervalos mais curtos), mas pode falhar na garantia da cobertura quando p é extremo ou n é pequeno.
+
+O **método do Arcseno** demonstra melhor equilíbrio entre largura e cobertura, sendo adequado para a maioria dos cenários práticos.
+
+O **método Conservador** oferece maior confiabilidade às custas de intervalos mais largos, sendo indicado quando o objetivo é evitar qualquer subestimação da incerteza.
+
+Portanto, o **método do Arcseno** se destaca como o mais robusto e equilibrado entre os três avaliados, conciliando uma boa cobertura empírica e intervalos de tamanho moderado.

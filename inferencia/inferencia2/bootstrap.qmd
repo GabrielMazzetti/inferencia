@@ -1,0 +1,245 @@
+---
+title: "Atividade Bootstrap - IC e TH"
+author: "Gabriel Sanábio Mazzetti Affonso"
+date: today
+format: 
+  html:
+    toc: true
+    theme: cosmos 
+    embed-resources: true
+    code-fold: true
+editor: visual
+---
+
+# Exemplo 1 
+
+## Introdução
+
+Nesta primeira parte, reproduzimos o Exemplo 1 da aula de Bootstrap, aplicando o procedimento a uma variável da base nativa `mtcars`. O objetivo é construir intervalos de confiança Bootstrap para a $mediana$, o primeiro quartil $Q_1$ e o terceiro quartil $Q_3$.
+Utilizaremos a variável `mpg` (milhas por galão).Segue abaixo uma breve apresentação dos dados que serão utilizados:
+
+
+```{r}
+data("mtcars")
+x <- mtcars$mpg
+head(x)
+length(x)
+```
+
+Como vimos, a amostra possui **`r length(x)`** observações.
+
+## O Procedimento Bootstrap
+
+O procedimento segue os seguintes passos:
+
+**1. Escolhe-se a amostra original $X = {x_1, ..., x_n}$. **
+
+**2. Gera-se $B = 1000$ reamostragens Bootstrap, cada uma com tamanho $n$ e com reposição.**
+
+**3. Em cada reamostra calcula-se:**
+
+- a mediana  
+- o primeiro quartil $Q_1$ 
+- o terceiro quartil $Q_3$
+
+4. Os valores obtidos formam vetores Bootstrap:
+
+$$
+M^* = (M_1^*, \ldots, M_{1000}^*)
+$$
+
+$$
+Q_1^* = (Q_{1,1}^*, \ldots, Q_{1,1000}^*)
+$$
+
+$$
+Q_3^* = (Q_{3,1}^*, \ldots, Q_{3,1000}^*)
+$$
+
+5. O intervalo de confiança é obtido pelos percentis:
+
+$$
+IC = \big[ \text{percentil}_{2.5\%},\; \text{percentil}_{97.5\%} \big]
+$$
+
+## Implementação em R
+
+Segue agora o código em R da implementação do método Bootstrap no contexto dos dados utilizados (variável `mpg` do conjunto de dados `mtcars`):
+ 
+```{r}
+set.seed(123)
+
+x <- mtcars$mpg
+n <- length(x)
+B <- 1000   
+
+med_boot <- numeric(B)
+q1_boot  <- numeric(B)
+q3_boot  <- numeric(B)
+
+for (i in 1:B) {
+  reamostra <- sample(x, size = n, replace = TRUE)
+  med_boot[i] <- median(reamostra)
+  q1_boot[i]  <- quantile(reamostra, 0.25)
+  q3_boot[i]  <- quantile(reamostra, 0.75)
+}
+
+# Intervalos de confiança (percentis)
+IC_med    <- quantile(med_boot, c(0.025, 0.975))
+IC_q1     <- quantile(q1_boot,  c(0.025, 0.975))
+IC_q3     <- quantile(q3_boot,  c(0.025, 0.975))
+
+IC_med
+IC_q1
+IC_q3
+
+```
+
+## Conclusão
+
+A partir das 1000 reamostragens Bootstrap aplicadas à variável `mpg` da base `mtcars`, obtivemos intervalos de confiança para a mediana, o primeiro quartil $Q_1$ e o terceiro quartil $Q_3$. Os resultados foram:
+
+- IC da $mediana$:
+  [16.85, 21.40]
+- IC de $Q_1$:
+  [14.60, 18.10]
+- IC de $Q_3$:
+  [21.00, 28.08]
+  
+Esses intervalos representam a incerteza associada às estimativas das medidas de posição, levando em conta a variabilidade amostral. Como o método Bootstrap não depende de suposições fortes sobre a distribuição da variável, ele fornece uma forma robusta de quantificar essa incerteza.Os resultados indicam que:
+
+- A $mediana$ do consumo de combustível dos carros da base `mtcars` está, com 95% de confiança Bootstrap, entre aproximadamente $17$ e $21$ `mpg`.
+- O $\text{primeiro quartil}\; Q_1$ está entre $14.6$ e $18.1$ `mpg`, descrevendo a região inferior da distribuição.
+- O $\text{terceiro quartil}\; Q_3$ está entre $21.0$ e $28.1$ `mpg`, delimitando a região superior da distribuição.
+
+Portanto, o procedimento Bootstrap mostrou-se adequado e eficiente para estimar os intervalos de confiança dessas estatísticas, reproduzindo os conceitos apresentados na aula e permitindo interpretar de maneira intuitiva a variabilidade dos dados.
+
+
+# Exemplo 2
+
+## Introdução
+
+Vamos utilizar a base de dados `swiss` do R:
+
+- X = Educação (`Education`)
+
+- Y = Fertilidade (`Fertility`)
+
+Sejam $X_1, \ldots, X_n$ e $Y_1, \ldots, Y_n$ as notas de duas avaliações
+dos indivíduos $1, \ldots, n$. Suponha que o interesse é determinar
+um intervalo de confiança para o coeficiente de correlação entre $X$ e $Y$.
+
+Neste caso, precisamos amostrar indivíduos inteiros, pois não faz sentido
+sortear $X_i$ e $Y_j$ de forma independente (por exemplo, sortear $X_3$ e $Y_5$
+não representa o mesmo indivíduo).
+
+Uma amostra Bootstrap é construída da seguinte forma.
+
+---
+
+## Algoritmo Bootstrap
+
+1. Para $b = 1, \ldots, B$:
+   - Amostramos **indivíduos** com reposição  
+     $$Z_b = (z_{b,1}, \ldots, z_{b,n}),$$
+     onde cada $z_{b,i} \in \{1, \ldots, n\}$.
+   - Construímos as reamostras:
+     $$
+     \mathbf{X}_b^* = (X_{z_{b,1}}, \ldots, X_{z_{b,n}}), \qquad
+     \mathbf{Y}_b^* = (Y_{z_{b,1}}, \ldots, Y_{z_{b,n}}).
+     $$
+   - Calculamos o coeficiente de correlação Bootstrap:
+     $$
+     T_b^* = \operatorname{corr}(\mathbf{X}_b^*, \mathbf{Y}_b^*).
+     $$
+
+2. Ao final, obtemos o vetor:
+   $$
+   (T_1^*, \ldots, T_B^*).
+   $$
+
+3. O intervalo de confiança para a correlação é dado pelos percentis:
+   $$
+   \left[ \text{percentil}_{\alpha/2}, \; \text{percentil}_{1 - \alpha/2} \right].
+   $$
+
+## Implementação em R
+
+```{r}
+set.seed(666)
+
+data(swiss)
+X <- swiss$Education
+Y <- swiss$Fertility
+
+n <- length(X)
+B <- 2000  # bootstrap
+
+T_boot <- numeric(B)
+
+for (b in 1:B) {
+  idx <- sample(1:n, size = n, replace = TRUE)  
+  Xb  <- X[idx]
+  Yb  <- Y[idx]
+  T_boot[b] <- cor(Xb, Yb)
+}
+
+# Intervalo de confiança bootstrap
+IC_cor <- quantile(T_boot, c(0.025, 0.975))
+IC_cor
+
+```
+
+## Conclusão
+
+Com base nas 2000 reamostragens Bootstrap realizadas a partir das variáveis `Education` e `Fertility` da base `swiss`, obtivemos um intervalo de confiança para o coeficiente de correlação entre essas duas variáveis.
+
+O intervalo de confiança obtido pelo método dos percentis foi:
+
+- IC 95% para a $correlação$:
+  [−0.804,−0.379]
+  
+Esse intervalo encontra-se totalmente abaixo de zero, indicando evidências fortes de que existe uma correlação negativa entre os níveis de escolaridade e a taxa de fertilidade das regiões analisadas.
+
+Em outras palavras, quanto maior o nível de educação médio da população, menor tende a ser a taxa de fertilidade — relação que está presente tanto na amostra original quanto de forma estável nas reamostragens Bootstrap.
+
+O método Bootstrap permite quantificar a incerteza dessa estimativa sem assumir normalidade ou outras condições fortes. A dispersão relativamente estreita do intervalo sugere que essa relação negativa é consistente entre os indivíduos da amostra.
+
+Assim, concluímos que há evidência estatística robusta de uma associação inversa entre educação e fertilidade no conjunto de dados `swiss`, e que essa relação permanece mesmo sob reamostragem repetida.
+
+Para visualizarmos melhor este resultado, segue uma análise gráfica com base nos dados que utilizamos:
+
+```{r, warning=FALSE}
+library(ggplot2)
+
+# correlação observada
+T_obs <- cor(X, Y)
+
+df_boot <- data.frame(T_boot = T_boot)
+
+dens <- density(T_boot)
+
+ggplot(df_boot, aes(x = T_boot)) +
+  geom_histogram(aes(y = ..density..),
+                 bins = 30,
+                 fill = "grey80",
+                 color = "white") +
+  geom_line(data = data.frame(x = dens$x, y = dens$y),
+            aes(x = x, y = y),
+            linewidth = 1.2) +
+  geom_vline(xintercept = IC_cor[1],
+             color = "#E69F00", linewidth = 1.2, linetype = "dashed") +
+  geom_vline(xintercept = IC_cor[2],
+             color = "#E69F00", linewidth = 1.2, linetype = "dashed") +
+  geom_vline(xintercept = T_obs,
+             color = "#0072B2", linewidth = 1.2) +
+  labs(
+    title = "Distribuição Bootstrap da Correlação",
+    x = "Correlação Bootstrap",
+    y = "Densidade"
+  ) +
+  theme_minimal(base_size = 14)
+
+
+```
+

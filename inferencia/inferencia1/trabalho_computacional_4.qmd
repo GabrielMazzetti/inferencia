@@ -1,0 +1,152 @@
+---
+title: "Trabalho Computacional 4"
+author: "Gabriel Sanábio Mazzetti Affonso"
+date: today
+format: 
+  html:
+    toc: true
+    theme: cosmos 
+    embed-resources: true
+    code-fold: true
+editor: visual
+---
+
+## Introdução
+
+Nesta aatividade, vamos analisar a relação entre o número de horas de estudo e o desempenho de estudantes em uma prova padronizada. Utilizaremos um modelo de regressão linear simples para investigar essa relação.
+
+## 1. Carregando os Dados
+
+Primeiro, vamos criar o data frame com os dados fornecidos.
+
+```{r}
+df <- data.frame(
+  hours = c(1, 2, 4, 5, 5, 6, 6, 7, 8, 10, 11, 11, 12, 12, 14),
+  score = c(64, 66, 76, 73, 74, 81, 83, 82, 80, 88, 84, 82, 91, 93, 89)
+)
+
+head(df)
+```
+
+## 2. Visualização dos Dados (Tarefa 1)
+
+Para entender a relação inicial entre as horas de estudo e a pontuação, criamos um gráfico de dispersão.
+
+```{r}
+plot(df$hours, df$score,
+     main = "Relação entre Horas de Estudo e Pontuação",
+     xlab = "Horas de Estudo",
+     ylab = "Pontuação na Prova",
+     pch = 19, # Tipo de ponto
+     col = "#0072B2") # Cor dos pontos
+```
+
+O gráfico de dispersão sugere uma relação linear positiva: à medida que as horas de estudo aumentam, a pontuação na prova também tende a aumentar.
+
+## 3. Ajuste do Modelo de Regressão Linear (Tarefa 2)
+
+Agora, vamos ajustar um modelo de regressão linear simples para quantificar essa relação.
+
+```{r}
+model <- lm(score ~ hours, data = df)
+```
+
+## 4. Interpretação dos Coeficientes (Tarefa 3)
+
+Vamos examinar os coeficientes do modelo para entender seu significado.
+
+```{r}
+# Exibir o resumo do modelo
+summary(model)
+```
+
+**Interpretação:**
+
+* **Intercepto (65.341):** Este é o valor esperado da pontuação (`score`) quando o número de horas de estudo (`hours`) é zero. Neste contexto, um aluno que não estuda nada teria uma pontuação estimada de aproximadamente 65.34.
+* **Coeficiente Angular (hours = 1.902):** Este é o coeficiente da nossa variável independente. Ele indica que, para cada hora adicional de estudo, a pontuação na prova (`score`) aumenta, em média, 1.902 pontos.
+
+## 5. Adicionando a Reta de Regressão ao Gráfico (Tarefa 4)
+
+Vamos visualizar a reta do nosso modelo no gráfico de dispersão.
+
+```{r}
+#gráfico de dispersão
+plot(df$hours, df$score,
+     main = "Relação entre Horas de Estudo e Pontuação",
+     xlab = "Horas de Estudo",
+     ylab = "Pontuação na Prova",
+     pch = 19,
+     col = "#0072B2")
+
+abline(model, col = "#E69F00", lwd = 2) # lwd é a espessura da linha
+```
+
+## 6. Previsão de Pontuações (Tarefas 5 e 6)
+
+Podemos usar o modelo para prever a pontuação de alunos com base em suas horas de estudo.
+
+```{r}
+new_hours <- data.frame(hours = c(9, 19))
+
+predicted_scores <- predict(model, newdata = new_hours)
+
+print(paste("Previsão para 9 horas de estudo:", round(predicted_scores[1], 2)))
+print(paste("Previsão para 19 horas de estudo:", round(predicted_scores[2], 2)))
+```
+
+**Discussão:**
+
+* **9 horas:** A previsão para um aluno que estudou 9 horas é uma pontuação de 82.46. Este valor está dentro do intervalo dos nossos dados originais (1 a 14 horas), sendo uma interpolação razoável.
+* **19 horas:** A previsão para 19 horas é de 101.48. É importante ter muito cuidado com essa previsão. Como 19 horas está fora do intervalo dos dados coletados, estamos fazendo uma **extrapolação**. O modelo assume que a relação linear continua indefinidamente, o que pode não ser verdade. A pontuação máxima poderia ser 100, por exemplo, e o modelo não captura esse limite.
+
+## 7. Qualidade do Ajuste (Tarefa 7)
+
+O R² (coeficiente de determinação) nos diz qual a proporção da variabilidade da pontuação que é explicada pelas horas de estudo.
+
+```{r}
+summary(model)$r.squared
+```
+
+**Análise:**
+
+O valor de R² é aproximadamente 0.769. Isso significa que cerca de 76.9% da variação nas pontuações dos alunos pode ser explicada pela variação no número de horas de estudo. Este é um valor relativamente alto, indicando que o modelo tem um bom poder explicativo.
+
+## 8. Análise de Resíduos (Tarefa 8)
+
+A análise dos resíduos nos ajuda a verificar se as suposições do modelo de regressão linear são atendidas.
+
+```{r}
+#resíduos vs. valores ajustados
+plot(model$fitted.values, model$residuals,
+     main = "Resíduos vs. Valores Ajustados",
+     xlab = "Valores Ajustados",
+     ylab = "Resíduos",
+     pch = 19)
+
+# Adicionar uma linha horizontal em y=0
+abline(h = 0, col = "#E69F00", lty = 2) 
+```
+
+**Análise:**
+
+Os resíduos parecem estar distribuídos aleatoriamente em torno da linha horizontal em zero, sem um padrão claro (como uma curva ou um funil). Isso é um bom sinal e sugere que a suposição de linearidade e de variância constante dos erros (homocedasticidade) é apropriada. Não há indícios de valores atípicos óbvios.
+
+## 9. Pensamento Crítico: Associação vs. Causalidade (Tarefa 9)
+
+**O modelo mostra que estudar mais causa uma pontuação maior? Ou apenas que há uma associação?**
+
+**Discussão:**
+
+O nosso modelo de regressão linear demonstra uma **forte associação (ou correlação) positiva** entre o número de horas de estudo e a pontuação na prova. No entanto, **não podemos concluir que há uma relação de causalidade** baseando-nos apenas nesta análise.
+
+* **Associação** significa que as duas variáveis tendem a se mover juntas. Quando uma aumenta, a outra também tende a aumentar.
+* **Causalidade** implicaria que o aumento nas horas de estudo é a causa direta do aumento na pontuação.
+
+Para provar causalidade, precisaríamos de um delineamento experimental mais rigoroso, como um ensaio controlado randomizado. Existem outras variáveis (chamadas de variáveis de confusão) que podem estar influenciando ambas as variáveis. Por exemplo:
+
+* **Interesse prévio no assunto:** Alunos mais interessados podem tanto estudar mais quanto ter um desempenho melhor.
+* **Qualidade do estudo:** O método de estudo pode ser mais importante que a quantidade de horas.
+* **Habilidade natural do aluno:** Alunos com mais facilidade na matéria podem ter boas notas mesmo com menos horas de estudo.
+
+Portanto, a conclusão correta é que existe uma forte relação positiva, mas seria imprudente afirmar que mais horas de estudo *causam* notas mais altas sem considerar outros fatores.
+

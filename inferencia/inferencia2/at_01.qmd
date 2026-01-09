@@ -1,0 +1,345 @@
+---
+title: "Resolução de Exercícios de Inferência Estatística"
+author: "Gabriel Sanábio Mazzetti Affonso"
+format: 
+  html:
+    embed-resources: true
+    toc: true
+    theme: cosmo
+editor: visual
+---
+# Terceira Prova 
+
+## Exercício 1 (Distribuição Log-Normal)
+
+Um engenheiro ambiental está estudando a concentração de um determinado poluente atmosférico em uma área industrial. A concentração $X$ (em $\mu g/m^3$) segue uma distribuição log-normal, ou seja, $Y = \ln(X) \sim \text{Normal}(\mu, \sigma^2)$.
+
+A função de densidade de probabilidade (f.d.p.) de $X$ é:
+$$
+f_X(x; \mu, \sigma^2) = \frac{1}{x\sigma\sqrt{2\pi}} \exp\left(-\frac{(\ln x - \mu)^2}{2\sigma^2}\right) I_{(0, \infty)}(x)
+$$
+onde $I_{(0, \infty)}(x)$ é a função indicadora que vale 1 se $x > 0$ e 0 caso contrário.
+
+---
+
+# a) Espaço paramétrico e suporte
+
+* **Espaço Paramétrico ($\Omega$):** O espaço paramétrico é o conjunto de todos os valores possíveis para os parâmetros $(\mu, \sigma^2)$. Como $\mu$ pode ser qualquer número real e $\sigma^2$ deve ser positivo, temos:
+    $$ \Omega = \{(\mu, \sigma^2) \in \mathbb{R} \times \mathbb{R}^+\} = \{(\mu, \sigma^2) \mid -\infty < \mu < \infty, \sigma^2 > 0\} $$
+* **Suporte da Distribuição ($\mathcal{X}$):** O suporte é o conjunto de todos os valores que a variável aleatória $X$ pode assumir com probabilidade positiva. Para a distribuição log-normal, a concentração $x$ deve ser estritamente positiva.
+    $$ \mathcal{X} = \{x \in \mathbb{R} \mid x > 0\} $$
+
+---
+
+# b) Família exponencial
+
+Para mostrar que a distribuição log-normal pertence à família exponencial, precisamos reescrever sua f.d.p. na forma geral:
+$$ f(x|\boldsymbol{\theta}) = h(x) c(\boldsymbol{\theta}) \exp\left(\sum_{j=1}^{k} w_j(\boldsymbol{\theta}) t_j(x)\right) $$
+Vamos manipular a f.d.p. da log-normal:
+$$
+\begin{aligned}
+f_X(x; \mu, \sigma^2) &= \frac{1}{x\sigma\sqrt{2\pi}} \exp\left(-\frac{(\ln x)^2 - 2\mu\ln x + \mu^2}{2\sigma^2}\right) I_{(0, \infty)}(x) \\
+&= \left[\frac{1}{x}I_{(0, \infty)}(x)\right] \cdot \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{\mu^2}{2\sigma^2}\right) \exp\left(-\frac{(\ln x)^2}{2\sigma^2} + \frac{\mu\ln x}{\sigma^2}\right)
+\end{aligned}
+$$
+Podemos identificar os componentes da família exponencial com $\boldsymbol{\theta} = (\mu, \sigma^2)$:
+* $h(x) = \frac{1}{x}I_{(0, \infty)}(x)$
+* $c(\boldsymbol{\theta}) = \frac{1}{\sigma\sqrt{2\pi}} \exp\left(-\frac{\mu^2}{2\sigma^2}\right)$
+* $w_1(\boldsymbol{\theta}) = \frac{\mu}{\sigma^2}$, $t_1(x) = \ln x$
+* $w_2(\boldsymbol{\theta}) = -\frac{1}{2\sigma^2}$, $t_2(x) = (\ln x)^2$
+
+Como foi possível escrever a f.d.p. no formato exigido, a distribuição log-normal **pertence à família exponencial**.
+
+---
+
+# c) Forma canônica
+
+A forma canônica da família exponencial é aquela onde $w_j(\boldsymbol{\theta}) = \theta_j$. No nosso caso, o vetor de parâmetros naturais é $\boldsymbol{\eta} = (\eta_1, \eta_2) = (w_1(\boldsymbol{\theta}), w_2(\boldsymbol{\theta})) = \left(\frac{\mu}{\sigma^2}, -\frac{1}{2\sigma^2}\right)$.
+
+O vetor de parâmetros original é $\boldsymbol{\theta} = (\mu, \sigma^2)$. Como $\boldsymbol{\eta} \neq \boldsymbol{\theta}$, a representação que encontramos **não é a forma canônica**.
+
+---
+
+# d) $E[\ln(X)]$ e $Var[\ln(X)]$
+
+Sabemos por definição que $Y = \ln(X)$ segue uma distribuição Normal, $Y \sim N(\mu, \sigma^2)$. As propriedades da distribuição normal nos dão diretamente a esperança e a variância de $Y$.
+
+* **Esperança:** A esperança de uma variável aleatória normal é o seu parâmetro de média.
+    $$ E[\ln(X)] = E[Y] = \mu $$
+* **Variância:** A variância de uma variável aleatória normal é o seu parâmetro de variância.
+    $$ \text{Var}[\ln(X)] = \text{Var}[Y] = \sigma^2 $$
+Isso prova as suas respostas.
+
+---
+
+# e) Estatística suficiente, mínima e completa
+
+Para uma família exponencial na forma que derivamos em (b), uma estatística suficiente para $\boldsymbol{\theta} = (\mu, \sigma^2)$ é dada pelo vetor das funções $t_j(x)$:
+$$ \mathbf{T}(X_1, \dots, X_n) = \left( \sum_{i=1}^n t_1(X_i), \sum_{i=1}^n t_2(X_i) \right) = \left( \sum_{i=1}^n \ln(X_i), \sum_{i=1}^n (\ln(X_i))^2 \right) $$
+Como o espaço paramétrico $\Omega$ contém um conjunto aberto em $\mathbb{R}^2$, a estatística $\mathbf{T}$ é também **mínima** e **completa**.
+
+---
+
+# f) Estatística recomendada para resumir os dados
+
+Como profissional estatístico, para resumir as concentrações do poluente, eu recomendaria as seguintes estatísticas:
+
+1.  **Média Geométrica:** É o exponencial da média dos logaritmos: $\exp\left(\frac{1}{n}\sum \ln(X_i)\right)$. A média dos logs $(\bar{y} = \frac{1}{n}\sum \ln(X_i))$ é uma estimativa de $\mu$, e a média geométrica é uma medida de tendência central mais robusta para dados com assimetria à direita, como a log-normal.
+2.  **Mediana Amostral:** A mediana é robusta a outliers e, para a distribuição log-normal, a mediana teórica é $\exp(\mu)$. A mediana amostral é um excelente estimador da tendência central dos dados.
+3.  **Desvio Padrão dos Logaritmos:** A quantidade $s_y = \sqrt{\frac{1}{n-1}\sum(\ln(X_i) - \bar{y})^2}$ é uma estimativa de $\sigma$. Este valor é crucial para entender a dispersão dos dados na escala logarítmica, que corresponde à dispersão relativa (multiplicativa) na escala original.
+
+**Justificativa:** A distribuição log-normal é assimétrica. O uso da média aritmética simples pode ser enganoso, pois é fortemente influenciado por valores extremos. As estatísticas suficientes $\sum \ln(X_i)$ e $\sum (\ln(X_i))^2$ (ou suas versões normalizadas, a média e variância dos logs) contêm toda a informação da amostra sobre os parâmetros $\mu$ e $\sigma^2$. Portanto, qualquer resumo dos dados deve ser baseado nelas. A média geométrica e a mediana são mais representativas da "concentração típica" do que a média aritmética.
+
+---
+
+# g) Estimador de Máxima Verossimilhança (EMV) de $\theta = (\mu, \sigma^2)$
+
+A função de verossimilhança para uma amostra aleatória $X_1, \dots, X_n$ é:
+$$ L(\mu, \sigma^2 | \mathbf{x}) = \prod_{i=1}^n \left[ \frac{1}{x_i\sigma\sqrt{2\pi}} \exp\left(-\frac{(\ln x_i - \mu)^2}{2\sigma^2}\right) I_{(0, \infty)}(x_i) \right] $$
+O logaritmo da verossimilhança (log-verossimilhança) é:
+$$ \ell(\mu, \sigma^2) = \ln L = \sum_{i=1}^n \left[ -\ln(x_i) - \frac{1}{2}\ln(2\pi\sigma^2) - \frac{(\ln x_i - \mu)^2}{2\sigma^2} + \ln(I_{(0, \infty)}(x_i)) \right] $$
+Assumindo que todas as observações $x_i > 0$, o termo $\ln(I_{(0, \infty)}(x_i)) = \ln(1) = 0$. Como o suporte da distribuição não depende dos parâmetros $\mu$ ou $\sigma^2$, este termo não afeta a maximização.
+$$ \ell(\mu, \sigma^2) = -\sum \ln(x_i) - \frac{n}{2}\ln(2\pi) - \frac{n}{2}\ln(\sigma^2) - \frac{1}{2\sigma^2}\sum (\ln x_i - \mu)^2 $$
+Para encontrar os EMVs, derivamos em relação a $\mu$ e $\sigma^2$ e igualamos a zero.
+
+Derivada em relação a $\mu$:
+$$ \frac{\partial\ell}{\partial\mu} = -\frac{1}{2\sigma^2} \sum 2(\ln x_i - \mu)(-1) = \frac{1}{\sigma^2} \sum(\ln x_i - \mu) = 0 $$
+$$ \sum \ln x_i - n\mu = 0 \implies \hat{\mu}_{MV} = \frac{1}{n} \sum_{i=1}^n \ln(X_i) = \overline{\ln(X)} $$
+Derivada em relação a $\sigma^2$:
+$$ \frac{\partial\ell}{\partial\sigma^2} = -\frac{n}{2\sigma^2} + \frac{1}{2(\sigma^2)^2} \sum(\ln x_i - \mu)^2 = 0 $$
+$$ \frac{1}{2(\sigma^2)^2} \sum(\ln x_i - \mu)^2 = \frac{n}{2\sigma^2} $$
+Substituindo $\mu$ por $\hat{\mu}_{MV}$:
+$$ \hat{\sigma}^2_{MV} = \frac{1}{n} \sum_{i=1}^n (\ln(X_i) - \overline{\ln(X)})^2 $$
+
+Portanto, os EMVs são a média amostral e a variância amostral (com $n$ no denominador) dos logaritmos dos dados.
+
+---
+
+# h) EMV de $E(X)$
+
+A esperança de uma variável aleatória log-normal é $E(X) = \exp(\mu + \sigma^2/2)$.
+Pela propriedade de invariância dos EMVs, o EMV de uma função dos parâmetros é a função aplicada aos EMVs dos parâmetros.
+$$ \widehat{E(X)}_{MV} = \exp(\hat{\mu}_{MV} + \hat{\sigma}^2_{MV}/2) = \exp\left(\overline{\ln(X)} + \frac{1}{2n} \sum_{i=1}^n (\ln(X_i) - \overline{\ln(X)})^2\right) $$
+
+---
+
+# i) Consistência do EMV de $\mu$
+
+Um estimador $\hat{\theta}$ é consistente para $\theta$ se $\hat{\theta} \xrightarrow{P} \theta$ quando $n \to \infty$.
+O EMV de $\mu$ é $\hat{\mu}_{MV} = \frac{1}{n} \sum \ln(X_i)$.
+Seja $Y_i = \ln(X_i)$. Sabemos que $Y_i \sim N(\mu, \sigma^2)$ são i.i.d.
+Pela Lei Fraca dos Grandes Números (LFGN), a média amostral converge em probabilidade para a esperança da população.
+$$ \hat{\mu}_{MV} = \bar{Y} \xrightarrow{P} E[Y_i] = \mu $$
+Portanto, o EMV de $\mu$ **é consistente**.
+
+---
+
+# j) Limite Inferior de Cramér-Rao (LIDCR) para $\mu$ (com $\sigma^2$ conhecida)
+
+A Informação de Fisher, $I(\mu)$, para um único elemento da amostra é:
+$$ I(\mu) = -E\left[\frac{\partial^2 \ln f(X|\mu)}{\partial\mu^2}\right] $$
+A log-verossimilhança para uma observação é $\ell_1 = -\ln(x) - \frac{1}{2}\ln(2\pi\sigma^2) - \frac{(\ln x - \mu)^2}{2\sigma^2} + \ln(I_{(0, \infty)}(x))$.
+Como o suporte não depende de $\mu$, o termo da função indicadora não afeta a derivada em relação a $\mu$.
+$$ \frac{\partial \ell_1}{\partial \mu} = \frac{\ln x - \mu}{\sigma^2} $$
+$$ \frac{\partial^2 \ell_1}{\partial \mu^2} = -\frac{1}{\sigma^2} $$
+A segunda derivada é uma constante, então a esperança é a própria constante.
+$$ I(\mu) = -E\left[-\frac{1}{\sigma^2}\right] = \frac{1}{\sigma^2} $$
+A informação para uma amostra de tamanho $n$ é $I_n(\mu) = n I(\mu) = \frac{n}{\sigma^2}$.
+O LIDCR para um estimador de $\tau(\mu) = \mu$ é o inverso da Informação de Fisher.
+$$ \text{LIDCR}(\mu) = \frac{1}{I_n(\mu)} = \frac{\sigma^2}{n} $$
+
+---
+
+# k) ENVVMU para $\mu$ (com $\sigma^2$ conhecida)
+
+Estamos procurando um Estimador Não Viesado de Variância Mínima Uniformemente (ENVVMU) para $\mu$.
+Vamos verificar o EMV, $\hat{\mu} = \overline{\ln(X)}$.
+
+1.  **Viesamento:**
+    $$ E[\hat{\mu}] = E\left[\frac{1}{n}\sum \ln(X_i)\right] = \frac{1}{n} \sum E[\ln(X_i)] = \frac{1}{n} \sum \mu = \frac{n\mu}{n} = \mu $$
+    O estimador é não viesado.
+
+2.  **Variância:**
+    $$ \text{Var}(\hat{\mu}) = \text{Var}\left(\frac{1}{n}\sum \ln(X_i)\right) = \frac{1}{n^2} \sum \text{Var}(\ln(X_i)) = \frac{1}{n^2} \sum \sigma^2 = \frac{n\sigma^2}{n^2} = \frac{\sigma^2}{n} $$
+    A variância do estimador atinge o Limite Inferior de Cramér-Rao.
+
+Pelo Teorema de Cramér-Rao, se um estimador não viesado atinge o LIDCR, ele é o ENVVMU.
+Portanto, $\hat{\mu} = \overline{\ln(X)}$ **é o ENVVMU** para $\mu$ quando $\sigma^2$ é conhecida.
+
+# Prova Substitutiva
+
+---
+
+## Exercício 1 (Banco de Investimentos)
+
+Deseja-se estimar a proporção de clientes que tiveram ganhos acima do esperado.
+
+---
+
+# a) Variável de interesse e distribuição
+
+Para cada cliente, podemos definir uma variável aleatória $X_i$ que assume o valor 1 se o cliente teve "ganho superior" (sucesso) e 0 caso contrário (fracasso).
+
+* **Variável de interesse ($X_i$):** É uma variável aleatória que indica o resultado para um cliente individual.
+* **Distribuição:** $X_i$ segue uma distribuição de **Bernoulli**, com parâmetro $p$, onde $p$ é a proporção populacional de clientes com ganho superior.
+    $$ X_i \sim \text{Bernoulli}(p) $$
+
+---
+
+# b) População e amostra
+
+* **População:** O conjunto de **todos os clientes** do banco de investimentos.
+* **Amostra:** O **conjunto de $n$ clientes** que foram selecionados aleatoriamente para o estudo.
+
+---
+
+# c) Parâmetro de interesse e estimador
+
+* **Parâmetro de interesse:** É a proporção populacional de clientes com ganhos acima do esperado, que denotamos por $p$.
+
+* **Estimador Adequado:** Um estimador adequado e intuitivo para $p$ é a proporção amostral, $\hat{p}$:
+    $$ \hat{p} = \frac{\sum_{i=1}^n X_i}{n} = \frac{\text{Número de sucessos na amostra}}{\text{Tamanho da amostra}} $$
+
+* **Discussão:**
+    * **Estimador de Momentos:** O primeiro momento populacional (a média) de $X_i$ é $E[X_i] = p$. O primeiro momento amostral é $\bar{X} = \frac{1}{n}\sum X_i$. Igualando os dois, $p = \bar{X}$, obtemos $\hat{p}_{MM} = \bar{X} = \frac{\sum X_i}{n}$.
+    * **Estimador de Máxima Verossimilhança (EMV):** A função de verossimilhança para uma amostra de ensaios de Bernoulli é $L(p | \mathbf{x}) = p^{\sum x_i} (1-p)^{n-\sum x_i}$. Maximizando esta função (ou seu logaritmo) em relação a $p$, encontramos que o EMV é $\hat{p}_{MV} = \frac{\sum X_i}{n}$.
+
+Ambos os métodos levam ao mesmo estimador, a proporção amostral $\hat{p}$, que é o estimador padrão para uma proporção populacional.
+
+---
+
+# d) Distribuição do estimador $\hat{p}$
+
+Seja $Y = \sum_{i=1}^n X_i$ o número total de sucessos na amostra. Como cada $X_i$ é um ensaio de Bernoulli independente, $Y$ segue uma distribuição Binomial.
+$$ Y \sim \text{Binomial}(n, p) $$
+O estimador é $\hat{p} = Y/n$.
+
+* **Distribuição Exata:** A distribuição de $\hat{p}$ é uma versão reescalada da distribuição Binomial. A probabilidade de $\hat{p}$ assumir um valor $k/n$ (onde $k \in \{0, 1, \dots, n\}$) é:
+    $$ P(\hat{p} = k/n) = P(Y=k) = \binom{n}{k} p^k (1-p)^{n-k} $$
+
+* **Distribuição Aproximada:** Pelo **Teorema Central do Limite (TCL)**, para $n$ suficientemente grande (geralmente $np \geq 5$ e $n(1-p) \geq 5$), a distribuição de $\hat{p}$ pode ser aproximada por uma distribuição Normal.
+    * $E[\hat{p}] = E[Y/n] = (np)/n = p$
+    * $\text{Var}(\hat{p}) = \text{Var}(Y/n) = (np(1-p))/n^2 = \frac{p(1-p)}{n}$
+    Portanto, a distribuição aproximada é:
+    $$ \hat{p} \approx N\left(p, \frac{p(1-p)}{n}\right) $$
+
+---
+
+# e) Estatística recomendada para resumir dados
+
+Como profissional estatístico, a estatística que eu recomendaria para resumir adequadamente esses dados com o objetivo de estimar a proporção é a **proporção amostral ($\hat{p}$)**, acompanhada de um **intervalo de confiança**.
+
+* **Estatística:** Proporção amostral, $\hat{p} = \frac{\text{número de ganhos superiores}}{n}$.
+
+**Justificativa:**
+
+1.  **Suficiência:** O número de sucessos, $Y = \sum X_i$, é uma estatística suficiente para o parâmetro $p$. Isso significa que $Y$ (e, por consequência, $\hat{p} = Y/n$) contém toda a informação relevante da amostra sobre $p$.
+2.  **Boas Propriedades:** $\hat{p}$ é o EMV, o estimador de momentos, é não viesado ($E[\hat{p}]=p$) e consistente.
+3.  **Interpretabilidade:** É uma medida direta e de fácil interpretação, representando a frequência relativa do evento de interesse na amostra.
+4.  **Incerteza:** Apresentar apenas a estimativa pontual ($\hat{p}$) é incompleto. Um **intervalo de confiança** (ex: IC de 95%) para $p$ quantifica a incerteza da estimativa devido à variabilidade amostral, fornecendo uma gama de valores plausíveis para a verdadeira proporção populacional.
+
+---
+
+## Exercício 2 (Ensaios de Bernoulli)
+
+Considere $X_1, \dots, X_n$ ensaios de Bernoulli com probabilidade de sucesso $p$. Seja $Y = \sum X_i$.
+Temos dois estimadores:
+1.  $\hat{p}_1 = \frac{Y}{n} = \bar{X}$
+2.  $\hat{p}_2 = X_1$ (1 se o primeiro ensaio for sucesso, 0 caso contrário)
+
+---
+
+# a) Esperança e variância de cada estimador
+
+**Estimador $\hat{p}_1$:**
+* **Esperança:**
+    $$ E[\hat{p}_1] = E\left[\frac{1}{n}\sum X_i\right] = \frac{1}{n}\sum E[X_i] = \frac{1}{n} \sum p = \frac{np}{n} = p $$
+* **Variância:**
+    $$ \text{Var}(\hat{p}_1) = \text{Var}\left(\frac{1}{n}\sum X_i\right) = \frac{1}{n^2}\sum \text{Var}(X_i) = \frac{1}{n^2} \sum p(1-p) = \frac{np(1-p)}{n^2} = \frac{p(1-p)}{n} $$
+
+**Estimador $\hat{p}_2$:**
+* **Esperança:**
+    $$ E[\hat{p}_2] = E[X_1] = p $$
+* **Variância:**
+    $$ \text{Var}(\hat{p}_2) = \text{Var}(X_1) = p(1-p) $$
+
+Ambos os estimadores são não viesados.
+
+---
+
+# b) Verifique se os estimadores são consistentes
+
+Um estimador $\hat{\theta}$ é consistente se seu Erro Quadrático Médio (EQM) tende a zero quando $n \to \infty$, ou se converge em probabilidade para o parâmetro.
+
+**Estimador $\hat{p}_1$:**
+O EQM de um estimador não viesado é igual à sua variância.
+$$ \text{EQM}(\hat{p}_1) = \text{Var}(\hat{p}_1) = \frac{p(1-p)}{n} $$
+Quando $n \to \infty$,
+$$ \lim_{n \to \infty} \text{EQM}(\hat{p}_1) = \lim_{n \to \infty} \frac{p(1-p)}{n} = 0 $$
+Portanto, $\hat{p}_1$ **é consistente**.
+
+**Estimador $\hat{p}_2$:**
+$$ \text{EQM}(\hat{p}_2) = \text{Var}(\hat{p}_2) = p(1-p) $$
+A variância (e o EQM) de $\hat{p}_2$ não depende de $n$.
+$$ \lim_{n \to \infty} \text{EQM}(\hat{p}_2) = p(1-p) \neq 0 \quad (\text{se } 0 < p < 1) $$
+Portanto, $\hat{p}_2$ **não é consistente**. Ele ignora toda a informação da amostra exceto a primeira observação.
+
+---
+
+# c) Qual dos estimadores você escolheria?
+
+Eu escolheria o estimador $\hat{p}_1 = Y/n$.
+
+**Discussão em termos de EQM:**
+
+O Erro Quadrático Médio (EQM) é uma medida da qualidade de um estimador, combinando sua variância e seu viés: $\text{EQM}(\hat{\theta}) = \text{Var}(\hat{\theta}) + (\text{Viés}(\hat{\theta}))^2$. Como ambos os estimadores são não viesados, o EQM é simplesmente a variância.
+
+* $\text{EQM}(\hat{p}_1) = \frac{p(1-p)}{n}$
+* $\text{EQM}(\hat{p}_2) = p(1-p)$
+
+Para qualquer $n > 1$ e $0 < p < 1$:
+$$ \frac{p(1-p)}{n} < p(1-p) \implies \text{EQM}(\hat{p}_1) < \text{EQM}(\hat{p}_2) $$
+O estimador $\hat{p}_1$ tem um erro quadrático médio uniformemente menor que $\hat{p}_2$. Isso significa que, em média, as estimativas de $\hat{p}_1$ estão mais próximas do verdadeiro valor de $p$ do que as estimativas de $\hat{p}_2$. Além disso, $\hat{p}_1$ é consistente, enquanto $\hat{p}_2$ não é, o que o torna a escolha superior e lógica.
+
+---
+
+# d) EMV de $\tau(p) = p/(1-p)$
+
+Sabemos que $\hat{p}_1 = Y/n$ é o EMV de $p$.
+Pela **propriedade de invariância dos EMVs**, o EMV de uma função de $p$, digamos $\tau(p)$, é simplesmente a função aplicada ao EMV de $p$.
+$$ \widehat{\tau(p)}_{MV} = \tau(\hat{p}_{MV}) $$
+Neste caso, $\tau(p) = \frac{p}{1-p}$. Portanto, o EMV é:
+$$ \widehat{\left(\frac{p}{1-p}\right)}_{MV} = \frac{\hat{p}_1}{1-\hat{p}_1} = \frac{Y/n}{1 - Y/n} = \frac{Y}{n-Y} $$
+**Justificativa:** A propriedade de invariância é uma característica fundamental dos estimadores de máxima verossimilhança, que afirma que se $\hat{\theta}$ é o EMV de $\theta$, então para qualquer função $g(\theta)$, o EMV de $g(\theta)$ é $g(\hat{\theta})$.
+
+---
+
+# e) LIDCR para $\tau(p) = p$
+
+A f.d.p. de uma Bernoulli é $f(x|p) = p^x(1-p)^{1-x}$.
+O logaritmo da verossimilhança para uma observação é $\ell_1 = x\ln p + (1-x)\ln(1-p)$.
+$$ \frac{\partial \ell_1}{\partial p} = \frac{x}{p} - \frac{1-x}{1-p} $$
+$$ \frac{\partial^2 \ell_1}{\partial p^2} = -\frac{x}{p^2} - \frac{1-x}{(1-p)^2} $$
+A Informação de Fisher para uma observação é:
+$$ I(p) = -E\left[\frac{\partial^2 \ell_1}{\partial p^2}\right] = -E\left[-\frac{X}{p^2} - \frac{1-X}{(1-p)^2}\right] $$
+Lembrando que $E[X] = p$:
+$$ I(p) = \frac{E[X]}{p^2} + \frac{1-E[X]}{(1-p)^2} = \frac{p}{p^2} + \frac{1-p}{(1-p)^2} = \frac{1}{p} + \frac{1}{1-p} = \frac{1}{p(1-p)} $$
+A informação para uma amostra de tamanho $n$ é $I_n(p) = n I(p) = \frac{n}{p(1-p)}$.
+O LIDCR para $\tau(p) = p$ é:
+$$ \text{LIDCR}(p) = \frac{1}{I_n(p)} = \frac{p(1-p)}{n} $$
+
+---
+
+# f) ENVVMU para $p$
+
+Estamos procurando um Estimador Não Viesado de Variância Mínima Uniformemente (ENVVMU) para $p$.
+A estatística $Y = \sum X_i$ é uma estatística suficiente e completa para $p$ (pois a família Bernoulli pertence à família exponencial).
+
+Pelo **Teorema de Lehmann-Scheffé**, se $T$ é uma estatística suficiente e completa para $\theta$, e $g(T)$ é um estimador não viesado para $\tau(\theta)$, então $g(T)$ é o ENVVMU de $\tau(\theta)$.
+
+Nós já temos um estimador que é função da estatística suficiente $Y$: o estimador $\hat{p}_1 = Y/n$.
+Vamos verificar seu viesamento (já feito em (a)):
+$$ E[\hat{p}_1] = E[Y/n] = p $$
+Como $\hat{p}_1 = Y/n$ é uma função da estatística suficiente e completa $Y$, e é um estimador não viesado para $p$, então, pelo Teorema de Lehmann-Scheffé, $\hat{p}_1 = Y/n$ **é o ENVVMU** para $p$.
+
+Adicionalmente, já vimos em (a) que $\text{Var}(\hat{p}_1) = \frac{p(1-p)}{n}$, que atinge o LIDCR encontrado em (e). Isso também confirma que $\hat{p}_1$ é o ENVVMU.

@@ -1,0 +1,141 @@
+---
+title: "Exercício computacional - parte 2"
+author: "Gabriel Sanábio Mazzetti Affonso"
+date: today
+format: 
+  html:
+    toc: true
+    theme: cosmos
+    embed-resources: true
+    code-fold: true
+editor: visual
+---
+
+# Exemplo 1: Exponencial
+
+$H_0: \theta = 50 \ \text{vs} \ H_1: \theta = 100$
+
+\textbf{Nota de aula:} Rejeita-se $H_0$ se $\sum_{i=1}^{n} X_i > k'$.
+
+## a) Gerar amostra sob H0
+
+```{r}
+set.seed(666) 
+alpha <- 0.05
+n <- 100
+theta_h0 <- 50
+theta_h1 <- 100
+
+dados_exp <- rexp(n, rate = 1/theta_h0)
+```
+
+## b) Estatística do Teste (Soma observada)
+
+```{r}
+estat_obs_exp <- sum(dados_exp)
+```
+
+## c) Método Tradicional (Região Crítica)
+
+Sob $H_0$, a soma de $n$ exponenciais segue uma distribuição `Gama(shape=n, scale=theta_h0)`.
+Como $H_1$ > $H_0$, rejeitamos para valores GRANDES da soma (cauda direita)
+
+```{r}
+rc_critico_exp <- qgamma(1 - alpha, shape = n, scale = theta_h0)
+```
+
+## d) P-valor
+
+Probabilidade de observar uma soma tão ou mais extrema que a observada, sob $H_0$.
+
+```{r}
+p_valor_exp <- 1 - pgamma(estat_obs_exp, shape = n, scale = theta_h0)
+```
+
+## Resultados
+
+```{r}
+cat("\n--- RESULTADOS EXEMPLO 1 (EXPONENCIAL) ---\n")
+cat("Hipóteses: H0: theta=50 vs H1: theta=100\n")
+cat("Amostra gerada sob H0 (espera-se NÃO rejeitar)\n")
+cat("Estatística Observada (Soma):", round(estat_obs_exp, 2), "\n")
+cat("Valor Crítico (Rc):", round(rc_critico_exp, 2), "\n")
+cat("P-valor:", format(p_valor_exp, digits=4), "\n")
+```
+
+## Decisão 
+
+```{r}
+if(p_valor_exp < alpha) {
+  cat("DECISÃO: Rejeitar H0 (Erro Tipo I cometido, pois a amostra veio de H0)\n")
+} else {
+  cat("DECISÃO: Não Rejeitar H0 (Decisão Correta)\n")
+}
+```
+
+# Exemplo 2: Bernoulli
+
+$H_0: \theta = 0.5 \ \text{vs} \ H_1: \theta = 0.7$
+
+\textbf{Nota de aula:} Rejeita-se $H_0$ se $\sum_{i=1}^{n} X_i \ge k'$.
+
+## a) Gerar amostra sob $H_1$ ($\theta$ = 0.7)
+
+```{r}
+p_h0 <- 0.5
+p_h1 <- 0.7
+dados_bern <- rbinom(n, size = 1, prob = p_h1)
+```
+
+## b) Estatística do Teste (Soma observada = número de sucessos)
+
+```{r}
+estat_obs_bern <- sum(dados_bern)
+```
+
+
+## c) Método Tradicional (Região Crítica)
+
+Sob $H_0$, a soma segue `Binomial(n, p_h0)`.
+Como $H_1$ > $H_0$, rejeitamos para valores GRANDES na cauda direita.
+Nota: Em discretas, o tamanho exato $\alpha$ nem sempre existe, usamos a aproximação conservadora ou o menor inteiro tal que $P(X \ge k) \le \alpha$.
+
+```{r}
+rc_critico_bern <- qbinom(1 - alpha, size = n, prob = p_h0)
+
+#queremos k tal que P(Soma >= k | H0) <= 0.05
+#o qbinom retorna o quantil inferior, vamos confirmar o corte:
+while(pbinom(rc_critico_bern - 1, n, p_h0, lower.tail = FALSE) > alpha) {
+  rc_critico_bern <- rc_critico_bern + 1
+}
+```
+
+## d) P-valor
+
+P(Soma >= estat_obs | $H_0$)
+
+```{r}
+p_valor_bern <- pbinom(estat_obs_bern - 1, size = n, prob = p_h0, lower.tail = FALSE)
+```
+
+## Resultados 
+
+```{r}
+cat("\n--- RESULTADOS EXEMPLO 2 (BERNOULLI) ---\n")
+cat("Hipóteses: H0: theta=0.5 vs H1: theta=0.7\n")
+cat("Amostra gerada sob H1 (espera-se REJEITAR H0)\n")
+cat("Estatística Observada (Sucessos):", estat_obs_bern, "\n")
+cat("Valor Crítico (Rc): >=", rc_critico_bern, "\n")
+cat("P-valor:", format(p_valor_bern, digits=4), "\n")
+```
+
+## Decisão
+
+```{r}
+if(p_valor_bern < alpha) {
+  cat("DECISÃO: Rejeitar H0 (Decisão Correta, pois amostra veio de H1)\n")
+} else {
+  cat("DECISÃO: Não Rejeitar H0 (Erro Tipo II cometido)\n")
+}
+```
+

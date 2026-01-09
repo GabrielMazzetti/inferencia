@@ -1,0 +1,296 @@
+---
+title: "Estudo de Intervalos de Confiança – Distribuição Exponencial"
+date: today
+format:
+  html:
+    toc: true
+    theme: cosmos
+    embed-resources: true
+    code-fold: true
+editor: visual
+execute:
+  warning: false
+  message: false
+---
+
+# Introdução
+
+Neste relatório comparamos duas abordagens para construção de intervalos de confiança
+para os parâmetros da distribuição exponencial:
+
+1. **IC Exato**, baseado na distribuição Qui-Quadrado.
+2. **IC Assintótico**, baseado na aproximação Normal.
+
+Os parâmetros estudados foram:
+
+- **λ** (taxa)
+- **μ = 1/λ** (média)
+- **σ = 1/λ** (desvio padrão)
+
+Os critérios analisados:
+
+- **Probabilidade de cobertura**
+- **Largura média dos intervalos**
+
+Cenários simulados:
+
+- Tamanhos amostrais: `n = 20, 50, 100, 200, 500`
+- Valores de λ:
+  - Pequeno: 0.5
+  - Médio: 2
+  - Grande: 8
+- Número de réplicas: `R = 5000`
+
+---
+
+# Funções Auxiliares
+
+## Estimador MLE
+
+```{r}
+# Estimador MLE de lambda
+mle_lambda <- function(x) {
+  1 / mean(x)
+}
+```
+
+## Intervalos de Confiança para λ
+
+### IC Exato
+
+```{r}
+ic_exato <- function(x, alpha = 0.05) {
+  n <- length(x)
+  S <- sum(x)
+
+  lower <- qchisq(alpha/2, df = 2 * n) / (2 * S)
+  upper <- qchisq(1 - alpha/2, df = 2 * n) / (2 * S)
+
+  c(lower, upper)
+}
+```
+
+### IC Assintótico
+
+```{r}
+ic_assintotico <- function(x, alpha = 0.05) {
+  n <- length(x)
+  lambda_hat <- mle_lambda(x)
+  z <- qnorm(1 - alpha/2)
+
+  erro <- z * lambda_hat / sqrt(n)
+
+  c(lambda_hat - erro, lambda_hat + erro)
+}
+```
+
+## Intervalos de Confiança para a média μ = 1/λ
+
+### IC Exato (μ)
+
+```{r}
+ic_media_exato <- function(x, alpha = 0.05) {
+  n <- length(x)
+  S <- sum(x)
+
+  # Fórmula derivada de 2*lambda*S ~ chi-square(2n)
+  lower <- 2 * S / qchisq(1 - alpha/2, df = 2 * n)
+  upper <- 2 * S / qchisq(alpha/2, df = 2 * n)
+
+  c(lower, upper)
+}
+```
+
+### IC Assintótico (μ)
+
+```{r}
+ic_media_assint <- function(x, alpha = 0.05) {
+  n <- length(x)
+  xbar <- mean(x)
+  z <- qnorm(1 - alpha/2)
+
+  erro <- z * xbar / sqrt(n)
+
+  c(xbar - erro, xbar + erro)
+}
+```
+
+## Intervalos de Confiança para o desvio padrão σ = 1/λ
+
+Na distribuição exponencial, μ e σ são iguais (μ = σ = 1/λ), portanto
+os ICs para média e desvio padrão coincidem em forma. Aqui reaproveitamos as funções de média.
+
+```{r}
+ic_sigma_exato <- function(x, alpha = 0.05) {
+  ic_media_exato(x, alpha)
+}
+
+ic_sigma_assint <- function(x, alpha = 0.05) {
+  ic_media_assint(x, alpha)
+}
+```
+
+# Simulação – Comparação de Cobertura e Largura
+
+```{r}
+simula_ic <- function(n, lambda, R = 5000) {
+  cobertura_exato <- 0
+  cobertura_assint <- 0
+
+  largura_exato <- numeric(R)
+  largura_assint <- numeric(R)
+
+  for (r in 1:R) {
+    x <- rexp(n, rate = lambda)
+
+    # IC Exato (para lambda)
+    ic1 <- ic_exato(x)
+    largura_exato[r] <- ic1[2] - ic1[1]
+    cobertura_exato <- cobertura_exato + (ic1[1] <= lambda & lambda <= ic1[2])
+
+    # IC Assintótico (para lambda)
+    ic2 <- ic_assintotico(x)
+    largura_assint[r] <- ic2[2] - ic2[1]
+    cobertura_assint <- cobertura_assint + (ic2[1] <= lambda & lambda <= ic2[2])
+  }
+
+  data.frame(
+    n = n,
+    lambda = lambda,
+    cobertura_exato = cobertura_exato / R,
+    cobertura_assint = cobertura_assint / R,
+    largura_exato = mean(largura_exato),
+    largura_assint = mean(largura_assint)
+  )
+}
+```
+
+```{r}
+simula_ic_media_sigma <- function(n, lambda, R = 5000) {
+  mu <- 1 / lambda
+  sigma <- 1 / lambda
+
+  cob_media_exato <- cob_media_assint <- 0
+  cob_sigma_exato <- cob_sigma_assint <- 0
+
+  for (r in 1:R) {
+    x <- rexp(n, rate = lambda)
+
+    # Média
+    icm_e <- ic_media_exato(x)
+    icm_a <- ic_media_assint(x)
+
+    cob_media_exato  <- cob_media_exato  + (icm_e[1] <= mu & mu <= icm_e[2])
+    cob_media_assint <- cob_media_assint + (icm_a[1] <= mu & mu <= icm_a[2])
+
+    # Desvio padrão (mesma forma que média)
+    ics_e <- ic_sigma_exato(x)
+    ics_a <- ic_sigma_assint(x)
+
+    cob_sigma_exato  <- cob_sigma_exato  + (ics_e[1] <= sigma & sigma <= ics_e[2])
+    cob_sigma_assint <- cob_sigma_assint + (ics_a[1] <= sigma & sigma <= ics_a[2])
+  }
+
+  data.frame(
+    n = n,
+    lambda = lambda,
+    cobertura_media_exato = cob_media_exato / R,
+    cobertura_media_assint = cob_media_assint / R,
+    cobertura_sigma_exato = cob_sigma_exato / R,
+    cobertura_sigma_assint = cob_sigma_assint / R
+  )
+}
+```
+
+# Execução das Simulações
+
+```{r}
+library(dplyr)
+library(ggplot2)
+library(knitr)
+
+ns <- c(20, 50, 100, 200, 500)
+lambdas <- c(0.5, 2, 8)
+
+resultados <- do.call(rbind,
+  lapply(ns, function(n)
+    do.call(rbind,
+      lapply(lambdas, function(lambda)
+        simula_ic(n, lambda)
+      )
+    )
+  )
+)
+
+result_media_sigma <- do.call(rbind,
+  lapply(ns, function(n)
+    do.call(rbind,
+      lapply(lambdas, function(lambda)
+        simula_ic_media_sigma(n, lambda)
+      )
+    )
+  )
+)
+```
+
+# Resultados – Tabelas
+
+```{r}
+kable(resultados, digits = 4, caption = "IC Exato vs Assintótico para λ")
+
+kable(result_media_sigma, digits = 4, caption = "Cobertura para Média e Desvio Padrão")
+```
+
+# Gráficos – λ
+
+```{r}
+ggplot(resultados, aes(x = n, y = cobertura_exato, color = factor(lambda))) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  labs(title = "Cobertura – IC Exato (λ)", x = "Tamanho Amostral", y = "Cobertura", color = "Lambda") +
+  ylim(0.7, 1)
+
+ggplot(resultados, aes(x = n, y = cobertura_assint, color = factor(lambda))) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  labs(title = "Cobertura – IC Assintótico (λ)", x = "Tamanho Amostral", y = "Cobertura", color = "Lambda") +
+  ylim(0.7, 1)
+```
+
+# Gráficos – Média e Sigma
+
+```{r}
+ggplot(result_media_sigma, aes(x = n, y = cobertura_media_exato, color = factor(lambda))) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  labs(title = "Cobertura – Média (IC Exato)", x = "Tamanho Amostral", y = "Cobertura", color = "Lambda") +
+  ylim(0.7, 1)
+
+ggplot(result_media_sigma, aes(x = n, y = cobertura_media_assint, color = factor(lambda))) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  labs(title = "Cobertura – Média (IC Assintótico)", x = "Tamanho Amostral", y = "Cobertura", color = "Lambda") +
+  ylim(0.7, 1)
+
+ggplot(result_media_sigma, aes(x = n, y = cobertura_sigma_exato, color = factor(lambda))) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  labs(title = "Cobertura – Sigma (IC Exato)", x = "Tamanho Amostral", y = "Cobertura", color = "Lambda") +
+  ylim(0.7, 1)
+
+ggplot(result_media_sigma, aes(x = n, y = cobertura_sigma_assint, color = factor(lambda))) +
+  geom_line(size = 1.2) +
+  geom_point(size = 2) +
+  labs(title = "Cobertura – Sigma (IC Assintótico)", x = "Tamanho Amostral", y = "Cobertura", color = "Lambda") +
+  ylim(0.7, 1)
+```
+
+# Conclusões
+
+- O IC exato apresenta cobertura muito próxima de 95% em muitos cenários.
+- O IC assintótico tende a ser mais estreito, mas pode subestimar a cobertura quando n é pequeno.
+- A discrepância entre os métodos costuma aumentar quando λ é grande.
+- Para n ≥ 200, ambos os métodos se tornam mais semelhantes.
+- Como média e desvio padrão são iguais na exponencial, seus ICs têm comportamentos idênticos.
+- Em aplicações com amostras pequenas, recomenda-se usar o IC exato quando possível.
+

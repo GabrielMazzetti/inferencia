@@ -1,0 +1,76 @@
+---
+title: "Trabalho Computacional 1"
+author: "Gabriel Sanábio Mazzetti Affonso"
+date: "2025-05-16"
+output: html_document
+---
+
+## Para o estudo empírico da distribuição da estatística Média Amostral, vamos considerar, inicialmente, uma população normal de média = 10 e variância = 2, e gerar 1000 amostras de tamanho n (n=20, 50, 100, 200 e 500) provenientes desta população.
+
+```{r, warning = FALSE}
+library(ggplot2) #para fazer o gráfico
+library(moments) #para realizar testes de assimetria e curtose
+library(nortest) #para realizar testes de normalidade
+
+set.seed(42)
+
+mu <- 10
+sigma <- sqrt(2)
+sample_sizes <- c(20, 50, 100, 200, 500)
+
+for (n in sample_sizes) {
+  sample_means <- replicate(1000, mean(rnorm(n, mean = mu, sd = sigma)))
+  
+  mean_mean <- mean(sample_means)
+  sd_mean <- sd(sample_means)
+  skewness_val <- skewness(sample_means)
+  kurtosis_val <- kurtosis(sample_means) - 3
+  shapiro_test <- shapiro.test(sample_means)
+  
+  df <- data.frame(media = sample_means)
+  
+  #gráfico
+  p <- ggplot(df, aes(x = media)) +
+    geom_histogram(aes(y = ..density..), bins = 30, fill = "skyblue", color = "black", alpha = 0.6) +
+    
+    geom_density(aes(color = "Densidade empírica"), size = 1) +
+    
+    stat_function(fun = dnorm, 
+                  args = list(mean = mean_mean, sd = sd_mean),
+                  aes(color = "Normal teórica"), 
+                  linetype = "dashed", size = 1) +
+    
+    scale_color_manual(values = c("Densidade empírica" = "#0072B2", "Normal teórica" = "#E69F00")) +
+    
+    labs(
+      title = paste("Distribuição da Média Amostral para n =", n),
+      x = "Média das amostras",
+      y = "Densidade",
+      color = "Legenda"
+    ) +
+    theme_minimal() +
+    theme(
+      plot.title = element_text(hjust = 0.5),
+      legend.position = "right"  
+    )
+  
+  print(p)
+  
+  cat("\n=====================================\n")
+  cat("Tamanho da amostra:", n, "\n")
+  cat("Média das médias amostrais:", round(mean_mean, 4), "\n")
+  cat("Desvio padrão das médias:", round(sd_mean, 4), "\n")
+  cat("Assimetria:", round(skewness_val, 4), "\n")
+  cat("Curtose (excesso):", round(kurtosis_val, 4), "\n")
+  cat("Shapiro-Wilk p-valor:", round(shapiro_test$p.value, 4), "\n")
+}
+
+```
+
+### Comentário sobre os resultados obtidos:
+
+À partir dos resultados obtidos nos testes e dos histogramas feitos à fim de visualizar estes resultados, podemos perceber diversos pontos importantes em relação à estatística Média Amostral. Começando pelo teste de Shapiro-Wilk: o p-valor obtido para todos os valores de n foi maior que 0.05, mostrando que a Média Amostral segue uma distribuição normal (aceita a hipótese nula). Além disso, é importante ressaltar que os valores de assimetria variaram dentro do intervalo [-0.1 , 0.1], mostrando que a distribuição é praticamente simétrica, até mesmo no caso de n=20. Em todos os tamanhos de amostra considerados, a média das médias amostrais ficou muito próxima de 10, mostrando que o estimador é não-viesado, já que:
+
+$\mathbb{E}[\bar{X}] = \mu$
+
+Por fim, em relação à variabilidade, vimos que à medida que n aumenta, o desvio-padrão das médias diminui, como previsto na teoria. Isso reforça a ideia de que amostras maiores geram estimativas mais precisas da média populacional.

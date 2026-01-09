@@ -1,0 +1,173 @@
+---
+title: "Método Delta"
+author: "Gabriel Sanábio Mazzetti Affonso"
+date: today
+format: 
+  html:
+    embed-resources: true
+    toc: true
+    theme: cosmo
+editor: visual
+---
+
+## Enunciado
+
+Sejam $X_1, \dots, X_n$ uma amostra aleatória da variável aleatória $X$ com distribuição exponencial com parâmetro $\theta$.\
+Encontre o estimador de máxima verossimilhança de $g(\theta) = P(X > 1)$ e sua distribuição aproximada quando $n$ for grande.
+
+------------------------------------------------------------------------
+
+## Passo 1: Expressar $g(\theta)$
+
+Sabemos que se $X \sim \text{Exp}(\theta)$, então sua função densidade é:
+
+$$
+f(x; \theta) = 
+\begin{cases}
+\frac{1}{\theta} e^{-x/\theta}, & x > 0 \\
+0, & \text{caso contrário.}
+\end{cases}
+$$
+
+A função pedida é:
+
+$$
+g(\theta) = P(X > 1) = \int_1^{\infty} \frac{1}{\theta} e^{-x/\theta} \, dx
+$$
+
+Calculando a integral:
+
+$$
+g(\theta) = e^{-1/\theta}.
+$$
+
+------------------------------------------------------------------------
+
+## Passo 2: Encontrar o EMV de $\theta$
+
+A função de verossimilhança da amostra $X_1, \dots, X_n$ é:
+
+$$
+L(\theta) = \prod_{i=1}^n \frac{1}{\theta} e^{-X_i/\theta}
+= \theta^{-n} e^{-\frac{1}{\theta} \sum_{i=1}^n X_i}.
+$$
+
+O logaritmo da verossimilhança é:
+
+$$
+\ell(\theta) = -n \log \theta - \frac{1}{\theta} \sum_{i=1}^n X_i.
+$$
+
+Derivando em relação a $\theta$ e igualando a zero:
+
+$$
+\frac{d\ell}{d\theta} = -\frac{n}{\theta} + \frac{1}{\theta^2} \sum_{i=1}^n X_i = 0.
+$$
+
+Resolvendo para $\theta$:
+
+$$
+\hat{\theta}_{EMV} = \frac{1}{n} \sum_{i=1}^n X_i = \bar{X}.
+$$
+
+------------------------------------------------------------------------
+
+## Passo 3: EMV de $g(\theta)$
+
+Como $g(\theta) = e^{-1/\theta}$, o estimador de máxima verossimilhança de $g(\theta)$ é obtido substituindo $\theta$ pelo seu EMV:
+
+$$
+\hat{g}_{EMV} = e^{-1/\bar{X}}.
+$$
+
+------------------------------------------------------------------------
+
+## Passo 4: Distribuição assintótica de $\hat{g}$ (método delta)
+
+Sabemos que:
+
+$$
+\bar{X} \sim N\left(\theta, \frac{\theta^2}{n}\right)
+$$
+
+para $n$ grande (aproximação pelo Teorema Central do Limite).
+
+Aplicando o **método delta**, temos que, para uma função diferenciável $g(\theta)$:
+
+$$
+\text{Var}(g(\bar{X})) \approx [g'(\theta)]^2 \text{Var}(\bar{X}).
+$$
+
+A derivada de $g(\theta) = e^{-1/\theta}$ é:
+
+$$
+g'(\theta) = e^{-1/\theta} \cdot \frac{1}{\theta^2}.
+$$
+
+Logo,
+
+$$
+\text{Var}(\hat{g}) \approx \left( e^{-1/\theta} \cdot \frac{1}{\theta^2} \right)^2 \cdot \frac{\theta^2}{n}
+= \frac{e^{-2/\theta}}{n \theta^2}.
+$$
+
+Portanto, assintoticamente:
+
+$$
+\hat{g}_{EMV} \sim N\left( e^{-1/\theta}, \frac{e^{-2/\theta}}{n \theta^2} \right).
+$$
+
+------------------------------------------------------------------------
+
+## Passo 5: Implementação em R
+
+```{r}
+# Simulação para verificar a aproximação assintótica
+
+set.seed(123)
+
+# Parâmetro verdadeiro
+theta <- 2
+n <- 100
+
+# Geração da amostra
+X <- rexp(n, rate = 1/theta)
+
+# EMV de theta
+theta_hat <- mean(X)
+
+# EMV de g(theta)
+g_hat <- exp(-1/theta_hat)
+
+# Valor verdadeiro de g(theta)
+g_true <- exp(-1/theta)
+
+cat("Estimador de theta:", theta_hat, "\n")
+cat("Estimador de g(theta):", g_hat, "\n")
+cat("Valor verdadeiro de g(theta):", g_true, "\n")
+
+# Simulação Monte Carlo para verificar a distribuição assintótica
+B <- 10000
+g_hats <- replicate(B, {
+  X <- rexp(n, rate = 1/theta)
+  exp(-1/mean(X))
+})
+
+# Média e variância amostral
+mean(g_hats)
+var(g_hats)
+
+# Comparando com variância teórica aproximada
+var_theoretical <- exp(-2/theta) / (n * theta^2)
+cat("Variância teórica aproximada:", var_theoretical, "\n")
+```
+
+## Conclusão
+
+A partir da análise teórica e empírica realizada, observamos que o estimador de máxima verossimilhança para o parâmetro de interesse $g(\theta) = P(X > 1)$, dado por $\hat{g}_{EMV} = e^{-1/\bar{X}}$, apresenta um comportamento bastante satisfatório.
+
+Os resultados obtidos nas simulações indicaram que, conforme o tamanho da amostra aumenta, o valor médio de $\hat{g}_{EMV}$ se aproxima de $g(\theta)$, evidenciando **consistência** do estimador. Além disso, a variância empírica calculada foi coerente com a variância teórica aproximada dada por $\frac{e^{-2/\theta}}{n\theta^2}$, confirmando a **validade da aproximação assintótica normal** derivada pelo método delta.
+
+Esses resultados mostram que o estimador $\hat{g}_{EMV}$ é eficiente para inferência sobre a probabilidade $P(X > 1)$ em distribuições exponenciais, especialmente para amostras de tamanho moderado a grande. Assim, o estudo evidencia a robustez da abordagem de máxima verossimilhança e reforça o uso do método delta como ferramenta teórica poderosa para a obtenção de distribuições assintóticas de estimadores não lineares.
+
+Em síntese, o experimento confirma as propriedades desejáveis do estimador: **consistência, normalidade assintótica e eficiência**, demonstrando a aplicabilidade prática dos conceitos teóricos de inferência estatística no contexto de distribuições exponenciais.

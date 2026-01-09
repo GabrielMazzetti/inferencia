@@ -1,0 +1,124 @@
+---
+title: "TH - Trabalho Computacional"
+author: "Gabriel Sanábio Mazzetti Affonso"
+date: today
+format: 
+  html:
+    toc: true
+    theme: cosmos
+    embed-resources: true
+    code-fold: true
+editor: visual
+---
+
+# Leitura dos Dados
+
+Primeiramente, vamos fazer a leitura dos dados que serão utilizados (CD - Placa Bacteriana) no classroom.Como é o arquivo .xls com várias planilhas dentro, temops que usar o `sheet` para selecionar a que queremos. Além disso, como nossos dados só começam na sétima linha, vamos usar o `skip = 6` para pular as seis primeiras linhas.
+
+```{r}
+library(readxl)
+
+dados <- read_excel("C:/Users/gabri/OneDrive/Documentos/inferencia/inferencia_2/Dados_EB.xls",
+                    sheet = "CD-Placa Bacteriana",
+                    skip = 6)
+
+names(dados) <- c("sujeito", "sexo",
+"hugger_antes", "hugger_depois",
+"conv_antes", "conv_depois")
+
+head(dados)
+
+```
+
+# Exercício 1.1 – Escova Convencional (Antes × Depois)
+
+## 1.1.1 - Formulação das Hipóteses
+
+Seja $D$ = Antes - Depois
+
+- $H_0: \mu_D = 0$
+- $H_1: \mu_D \ne 0$
+
+Ou seja, o teste é bicaudal.
+
+## 1.1.2 - Análise dos Dados
+
+```{r}
+summary(dados$conv_antes)
+summary(dados$conv_depois)
+
+
+boxplot(dados$conv_antes, dados$conv_depois,
+names = c("Antes", "Depois"),
+main = "Índice de placa – Escova Convencional")
+```
+
+Observa-se, de forma descritiva, uma redução dos índices de placa bacteriana após a escovação.
+
+
+## 1.1.3 - Verificação do pressuposto de normalidade
+
+```{r}
+dif_conv <- dados$conv_antes - dados$conv_depois
+shapiro.test(dif_conv)
+```
+
+Como o p-valor obtido é superior a 0,05, não se rejeita a hipótese de normalidade das diferenças.
+
+
+## 1.1.4 - Teste t pareado
+
+```{r}
+t.test(dados$conv_antes, dados$conv_depois,
+  paired = TRUE,
+  alternative = "two.sided",
+  conf.level = 0.95)
+```
+
+## 1.1.5 - Conclusão
+
+O teste t pareado indicou diferença estatisticamente significativa entre os índices médios de placa bacteriana antes e depois do uso da escova convencional (t = 7,81; gl = 25; p < 0,001). Dessa forma, ao nível de significância de 5%, rejeita-se a hipótese nula de igualdade das médias, indicando que a escovação convencional promove alteração significativa no índice de placa bacteriana. A diferença média estimada foi de 1,13 unidades, com intervalo de confiança de 95% variando de 0,83 a 1,42. Como o intervalo não contém o valor zero, conclui-se que houve, em média, uma redução significativa do índice de placa bacteriana após a escovação.
+
+
+# Exercício 1.2 – Escova Convencional × Escova Hugger (Após a escovação)
+
+## 1.2.1 - Formulação das Hipóteses
+
+Seja $D$ = Convencional - Hugger
+
+- $H_0: \mu_D = 0$
+- $H_1: \mu_D \ne 0$
+
+## 1.2.2 - Análise dos Dados
+
+```{r}
+summary(dados$conv_depois)
+summary(dados$hugger_depois)
+
+
+boxplot(dados$conv_depois, dados$hugger_depois,
+names = c("Convencional", "Hugger"),
+main = "Índice de placa após escovação")
+```
+
+## 1.2.3 - Verificação do pressuposto de normalidade
+
+```{r}
+dif_escovas <- dados$conv_depois - dados$hugger_depois
+shapiro.test(dif_escovas)
+```
+Como o p-valor obtido é superior a 0,05, não se rejeita a hipótese de normalidade das diferenças.
+
+## 1.2.4 - Teste t pareado
+
+```{r}
+t.test(dados$conv_depois, dados$hugger_depois,
+  paired = TRUE,
+  alternative = "two.sided",
+  conf.level = 0.95)
+```
+
+## 1.2.5 - Conclusão
+
+O teste t pareado indicou diferença estatisticamente significativa entre os índices médios de placa bacteriana após o uso da escova convencional e da escova experimental Hugger (t = 4,26; gl = 25; p < 0,001). Assim, ao nível de significância de 5%, rejeita-se a hipótese nula de igualdade das médias, indicando que o índice médio de placa bacteriana após a escovação difere de acordo com o tipo de escova utilizada. A diferença média estimada foi de aproximadamente 0,50 unidades, com intervalo de confiança de 95% variando de 0,26 a 0,74. Como o intervalo não contém o valor zero e é inteiramente positivo, conclui-se que a escova experimental Hugger apresentou, em média, menor índice de placa bacteriana quando comparada à escova convencional.
+

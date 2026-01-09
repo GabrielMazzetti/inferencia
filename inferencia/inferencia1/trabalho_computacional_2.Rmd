@@ -1,0 +1,144 @@
+---
+title: "Trabalho Computacional 2"
+author: "Gabriel Sanábio Mazzetti Affonso"
+date: "2025-05-30"
+output: html_document
+---
+
+# Neste experimento computacional, estudaremos empiricamente o comportamento da estatística média amostral para duas distribuições populacionais: Exponencial(1) e Bernoulli(0.3). Para cada uma, geraremos 1000 amostras de tamanhos n=20,50,100,200,500 e calcularemos a média de cada amostra e, a seguir, analisaremos a distribuição dessas médias.
+
+```{r, warning = FALSE}
+
+library(ggplot2)
+library(gridExtra)
+library(nortest)
+library(moments)
+
+
+set.seed(123)
+
+distribuicoes <- list(
+  "Exponencial(1)" = list(
+    rdist = function(n) rexp(n, rate = 1),
+    media_pop = 1,
+    var_pop = 1
+  ),
+  "Bernoulli(0.3)" = list(
+    rdist = function(n) rbinom(n, size = 1, prob = 0.3),
+    media_pop = 0.3,
+    var_pop = 0.3 * (1 - 0.3)
+  )
+)
+
+tamanhos_amostra <- c(20, 50, 100, 200, 500)
+num_amostras <- 1000
+
+# Função para realizar o experimento
+simular_medias_amostrais <- function(rdist, media_pop, var_pop, n, num_amostras) {
+  medias <- replicate(num_amostras, {
+    amostra <- rdist(n)
+    mean(amostra)
+  })
+  
+  # Estatísticas descritivas
+  media_medias <- mean(medias)
+  var_medias <- var(medias)
+  assimetria <- skewness(medias)
+  
+  # Teste de normalidade (Anderson-Darling)
+  teste_normal <- ad.test(medias)
+  
+  # Resultados
+  list(
+    medias = medias,
+    stats = data.frame(
+      n = n,
+      Media_Media = media_medias,
+      Variancia_Media = var_medias,
+      Teorico_EP = sqrt(var_pop / n),
+      Assimetria = assimetria,
+      p_valor_normal = teste_normal$p.value
+    )
+  )
+}
+
+resultados_medias <- list()
+resultados_stats <- list()
+
+for (dist_nome in names(distribuicoes)) {
+  dist <- distribuicoes[[dist_nome]]
+  medias_list <- list()
+  stats_df <- data.frame()
+  
+  for (n in tamanhos_amostra) {
+    resultado <- simular_medias_amostrais(
+      dist$rdist, dist$media_pop, dist$var_pop, n, num_amostras
+    )
+    medias_list[[as.character(n)]] <- resultado$medias
+    stats_df <- rbind(stats_df, resultado$stats)
+  }
+  
+  resultados_medias[[dist_nome]] <- medias_list
+  resultados_stats[[dist_nome]] <- stats_df
+}
+
+# Calcular limites comuns para cada distribuição
+limites_x <- list()
+
+for (dist_nome in names(resultados_medias)) {
+  # Juntar todas as médias da distribuição
+  todas_medias <- unlist(resultados_medias[[dist_nome]])
+  
+  # Calcular limites expandidos em 5%
+  range_medias <- range(todas_medias)
+  expansao <- 0.05 * diff(range_medias)
+  
+  limites_x[[dist_nome]] <- c(
+    range_medias[1] - expansao,
+    range_medias[2] + expansao
+  )
+}
+
+graficos <- list()
+
+for (dist_nome in names(resultados_medias)) {
+  plots <- list()
+  dist <- distribuicoes[[dist_nome]]
+  medias_list <- resultados_medias[[dist_nome]]
+  
+  for (n in tamanhos_amostra) {
+    df_plot <- data.frame(medias = medias_list[[as.character(n)]])
+    
+    p <- ggplot(df_plot, aes(x = medias)) +
+      geom_histogram(aes(y = ..density..), bins = 30, 
+                     fill = "skyblue", alpha = 0.7, color = "black") +
+      geom_vline(xintercept = dist$media_pop, 
+                 color = "#E69F00", linetype = "dashed", size = 1) +
+      stat_function(fun = dnorm, 
+                   args = list(mean = dist$media_pop, sd = sqrt(dist$var_pop / n)),
+                   color = "black", size = 1) +
+      labs(title = paste(dist_nome, "- n =", n),
+           x = "Média Amostral", y = "Densidade") +
+      theme_minimal() +
+      xlim(limites_x[[dist_nome]]) +  #escala 
+      ylim(0, NA)  
+    
+    plots[[as.character(n)]] <- p
+  }
+  graficos[[dist_nome]] <- plots
+}
+
+for (dist_nome in names(graficos)) {
+  grid.arrange(
+    grobs = graficos[[dist_nome]], 
+    ncol = 3,
+    top = paste("Distribuição de Médias Amostrais -", dist_nome)
+  )
+}
+
+print(resultados_stats)
+```
+
+ Comentário sobre os resultados obtidos: Observamos que, de forma geral, a média das médias amostrais se aproxima muito da média populacional teórica para todos os valores de n, mostrando que a média amostral é um estimador não-viesado da média populacional. Já em relação à variância, observamos que ela diminui à medida que o tamanho de n aumenta, o que já é esperado teoricamente. Obs: notamos que na exponencial a aproximação está centrada em 1 e na Bernoulli em 0.3 (valores das respectivas médias amostrais).
+ Em relação à simetria, sabemos que a Exponencial(1) é assimétrica positiva, o quê é bem refletido nas amostras pequenas. Porém, à medida que n aumenta, a distribuição da média tende à simetria (como vemos nos valores de n= 200, 500, em que a assimetria fica bastante próxima de zero). Para a Bernoulli(0.3), o quê observamos é que apesar de discreta e assimétrica, a aproximação à simetria nas médias amostrais se mostrou mais rápida, se olharmos, por exemplo, que a assimetria obtida à partir de n=100 já é bastante próxima de zero. Estes resultados relacionados à simetria estão de acordo com o Teorema Central do Limite, que nos diz que para valores de n grandes e variância finita, a distribuição da média amostral tende a uma normal.
+ Dessa forma, podemos afirmar que a aproximação da Exponencial(1) se torna muito boa à partir de n=200, enquanto a aproximação da Bernoulli(0.3) se torna muito boa à partir de n=100.

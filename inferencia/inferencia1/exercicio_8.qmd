@@ -1,0 +1,237 @@
+---
+title: "Exercício 8"
+author: "Gabriel Sanábio Mazzetti Affonso"
+date: today
+format: 
+  html:
+    toc: true
+    theme: cosmos
+    embed-resources: true
+    code-fold: true
+editor: visual
+---
+
+# Questão 1.7
+
+Sejam $X_1, X_2, \dots, X_n$ uma amostra aleatória de tamanho $n$ da população $X$ com função de densidade de probabilidade (fdp) dada por:
+
+$$
+f(x; \theta) = \frac{2x}{\theta^2}, \quad 0 < x < \theta \text{ e } \theta > 0.
+$$
+
+## a) Especifique o espaço paramétrico e o suporte associado à distribuição de X.
+
+**Espaço Paramétrico ($\Omega$)**:
+O espaço paramétrico é o conjunto de todos os valores possíveis para o parâmetro $\theta$. De acordo com a definição da fdp, temos que $\theta > 0$. Portanto, o espaço paramétrico é:
+
+$$
+\Omega = \{\theta \in \mathbb{R} \mid \theta > 0\} = (0, \infty)
+$$
+
+**Suporte da Distribuição ($S_X$)**:
+O suporte é o conjunto de todos os valores que a variável aleatória $X$ pode assumir para os quais a fdp é maior que zero. Pela definição, temos $0 < x < \theta$. Assim, o suporte é:
+
+$$
+S_X = \{x \in \mathbb{R} \mid 0 < x < \theta\} = (0, \theta)
+$$
+
+## b) Encontre o EMV de $\theta$.
+
+Para encontrar o Estimador de Máxima Verossimilhança (EMV) de $\theta$, primeiro escrevemos a função de verossimilhança $L(\theta)$.
+
+A função de verossimilhança para a amostra $x_1, \dots, x_n$ é o produto das densidades individuais:
+
+$$
+L(\theta \mid \mathbf{x}) = \prod_{i=1}^{n} f(x_i; \theta) = \prod_{i=1}^{n} \frac{2x_i}{\theta^2}
+$$
+
+Isso é válido para $0 < x_i < \theta$ para todo $i=1, \dots, n$. Essa condição pode ser reescrita de forma mais compacta usando a estatística de ordem do máximo da amostra, $x_{(n)} = \max\{x_1, \dots, x_n\}$. A condição se torna $0 < x_{(n)} < \theta$.
+
+A função de verossimilhança é então:
+
+$$
+L(\theta) = \left(\frac{2}{\theta^2}\right)^n \prod_{i=1}^{n} x_i = \frac{2^n}{\theta^{2n}} \prod_{i=1}^{n} x_i, \quad \text{para } \theta > x_{(n)}
+$$
+
+E $L(\theta) = 0$ para $\theta \le x_{(n)}$.
+
+Para maximizar $L(\theta)$, observamos que o termo $\left(2^n \prod x_i\right)$ é uma constante positiva em relação a $\theta$. A função depende de $\theta$ através do termo $\frac{1}{\theta^{2n}}$. Esta é uma função decrescente de $\theta$.
+
+Para maximizar $L(\theta)$, precisamos escolher o menor valor possível para $\theta$. Dado o domínio $\theta > x_{(n)}$, o valor de $\theta$ que maximiza a função é o menor valor permitido, que é $x_{(n)}$.
+
+Portanto, o EMV de $\theta$ é:
+
+$$
+\hat{\theta}_{EMV} = X_{(n)} = \max\{X_1, \dots, X_n\}
+$$
+
+## c) Verifique se $\hat{\theta}_1 = \bar{X}$ e $\hat{\theta}_2 = X_{(n)}$ são estimadores não viciados para $\theta$.
+
+Um estimador $\hat{\theta}$ é não viciado (ou não viesado) para $\theta$ se $E[\hat{\theta}] = \theta$.
+
+### Análise de $\hat{\theta}_1 = \bar{X}$
+
+Primeiro, calculamos a esperança de $X$:
+
+$$
+E[X] = \int_{0}^{\theta} x \cdot f(x; \theta) \,dx = \int_{0}^{\theta} x \cdot \frac{2x}{\theta^2} \,dx = \frac{2}{\theta^2} \int_{0}^{\theta} x^2 \,dx
+$$
+
+$$
+E[X] = \frac{2}{\theta^2} \left[ \frac{x^3}{3} \right]_{0}^{\theta} = \frac{2}{\theta^2} \cdot \frac{\theta^3}{3} = \frac{2\theta}{3}
+$$
+
+Agora, calculamos a esperança do estimador $\hat{\theta}_1$:
+
+$$
+E[\hat{\theta}_1] = E[\bar{X}] = E\left[\frac{1}{n}\sum_{i=1}^{n} X_i\right] = \frac{1}{n}\sum_{i=1}^{n} E[X_i] = E[X] = \frac{2\theta}{3}
+$$
+
+Como $E[\hat{\theta}_1] = \frac{2\theta}{3} \neq \theta$, concluímos que **$\hat{\theta}_1 = \bar{X}$ é um estimador viciado** para $\theta$.
+
+### Análise de $\hat{\theta}_2 = X_{(n)}$
+
+Para calcular $E[X_{(n)}]$, precisamos primeiro da fdp de $X_{(n)}$. Para isso, encontramos a Função de Distribuição Acumulada (FDA) de $X$, $F_X(x)$:
+
+$$
+F_X(x) = \int_{0}^{x} \frac{2t}{\theta^2} \,dt = \frac{2}{\theta^2} \left[ \frac{t^2}{2} \right]_{0}^{x} = \frac{x^2}{\theta^2}, \quad \text{para } 0 < x < \theta
+$$
+
+A FDA de $X_{(n)}$ é $F_{X_{(n)}}(y) = [F_X(y)]^n$:
+
+$$
+F_{X_{(n)}}(y) = \left(\frac{y^2}{\theta^2}\right)^n = \frac{y^{2n}}{\theta^{2n}}, \quad \text{para } 0 < y < \theta
+$$
+
+A fdp de $X_{(n)}$ é a derivada da sua FDA:
+
+$$
+f_{X_{(n)}}(y) = \frac{d}{dy} F_{X_{(n)}}(y) = \frac{2n \cdot y^{2n-1}}{\theta^{2n}}, \quad \text{para } 0 < y < \theta
+$$
+
+Agora, podemos calcular a esperança de $\hat{\theta}_2 = X_{(n)}$:
+
+$$
+E[\hat{\theta}_2] = \int_{0}^{\theta} y \cdot f_{X_{(n)}}(y) \,dy = \int_{0}^{\theta} y \cdot \frac{2n \cdot y^{2n-1}}{\theta^{2n}} \,dy
+$$
+
+$$
+E[\hat{\theta}_2] = \frac{2n}{\theta^{2n}} \int_{0}^{\theta} y^{2n} \,dy = \frac{2n}{\theta^{2n}} \left[ \frac{y^{2n+1}}{2n+1} \right]_{0}^{\theta} = \frac{2n}{\theta^{2n}} \frac{\theta^{2n+1}}{2n+1} = \frac{2n}{2n+1}\theta
+$$
+
+Como $E[\hat{\theta}_2] = \frac{2n}{2n+1}\theta \neq \theta$, concluímos que **$\hat{\theta}_2 = X_{(n)}$ também é um estimador viciado** para $\theta$.
+
+## d) Encontre e compare os EQMs dos dois estimadores. Faça um gráfico como função de $\theta$.
+
+O Erro Quadrático Médio (EQM) de um estimador é dado por $EQM(\hat{\theta}) = Var(\hat{\theta}) + (Vício(\hat{\theta}))^2$.
+
+### EQM de $\hat{\theta}_1 = \bar{X}$
+
+1.  **Vício**:
+    $Vício(\hat{\theta}_1) = E[\hat{\theta}_1] - \theta = \frac{2\theta}{3} - \theta = -\frac{\theta}{3}$
+
+2.  **Variância**:
+    $Var(\hat{\theta}_1) = Var(\bar{X}) = \frac{Var(X)}{n}$. Precisamos de $Var(X) = E[X^2] - (E[X])^2$.
+    
+    $E[X^2] = \int_{0}^{\theta} x^2 \frac{2x}{\theta^2} \,dx = \frac{2}{\theta^2} \int_{0}^{\theta} x^3 \,dx = \frac{2}{\theta^2} \left[ \frac{x^4}{4} \right]_{0}^{\theta} = \frac{2\theta^4}{4\theta^2} = \frac{\theta^2}{2}$
+    
+    $Var(X) = \frac{\theta^2}{2} - \left(\frac{2\theta}{3}\right)^2 = \frac{\theta^2}{2} - \frac{4\theta^2}{9} = \frac{9\theta^2 - 8\theta^2}{18} = \frac{\theta^2}{18}$
+    
+    $Var(\hat{\theta}_1) = \frac{\theta^2/18}{n} = \frac{\theta^2}{18n}$
+
+3.  **EQM**:
+    $EQM(\hat{\theta}_1) = \frac{\theta^2}{18n} + \left(-\frac{\theta}{3}\right)^2 = \frac{\theta^2}{18n} + \frac{\theta^2}{9} = \theta^2 \left(\frac{1}{18n} + \frac{2n}{18n}\right)$
+    
+    $$
+    EQM(\hat{\theta}_1) = \frac{\theta^2(1+2n)}{18n}
+    $$
+
+### EQM de $\hat{\theta}_2 = X_{(n)}$
+
+1.  **Vício**:
+    $Vício(\hat{\theta}_2) = E[\hat{\theta}_2] - \theta = \frac{2n}{2n+1}\theta - \theta = -\frac{\theta}{2n+1}$
+
+2.  **Variância**:
+    $Var(\hat{\theta}_2) = E[X_{(n)}^2] - (E[X_{(n)}])^2$.
+    
+    $E[X_{(n)}^2] = \int_{0}^{\theta} y^2 \frac{2n \cdot y^{2n-1}}{\theta^{2n}} \,dy = \frac{2n}{\theta^{2n}} \int_{0}^{\theta} y^{2n+1} \,dy = \frac{2n}{\theta^{2n}} \left[ \frac{y^{2n+2}}{2n+2} \right]_{0}^{\theta} = \frac{2n \cdot \theta^{2n+2}}{\theta^{2n}(2n+2)} = \frac{n}{n+1}\theta^2$
+    
+    $Var(\hat{\theta}_2) = \frac{n\theta^2}{n+1} - \left(\frac{2n\theta}{2n+1}\right)^2 = \theta^2 \left(\frac{n}{n+1} - \frac{4n^2}{(2n+1)^2}\right)$
+    $Var(\hat{\theta}_2) = \theta^2 \frac{n(2n+1)^2 - 4n^2(n+1)}{(n+1)(2n+1)^2} = \theta^2 \frac{n(4n^2+4n+1) - 4n^3-4n^2}{(n+1)(2n+1)^2}$
+    $Var(\hat{\theta}_2) = \theta^2 \frac{4n^3+4n^2+n - 4n^3-4n^2}{(n+1)(2n+1)^2} = \frac{n\theta^2}{(n+1)(2n+1)^2}$
+
+3.  **EQM**:
+    $EQM(\hat{\theta}_2) = \frac{n\theta^2}{(n+1)(2n+1)^2} + \left(-\frac{\theta}{2n+1}\right)^2 = \frac{n\theta^2}{(n+1)(2n+1)^2} + \frac{\theta^2}{(2n+1)^2}$
+    $EQM(\hat{\theta}_2) = \frac{\theta^2}{(2n+1)^2} \left(\frac{n}{n+1} + 1\right) = \frac{\theta^2}{(2n+1)^2} \left(\frac{n+n+1}{n+1}\right) = \frac{\theta^2}{(2n+1)^2} \frac{2n+1}{n+1}$
+    
+    $$
+    EQM(\hat{\theta}_2) = \frac{\theta^2}{(n+1)(2n+1)}
+    $$
+
+### Comparação Gráfica
+
+Agora, vamos usar R para plotar os dois EQMs como uma função de $\theta$ para um tamanho de amostra $n$ fixo (por exemplo, $n=10$).
+
+```{r}
+#| label: fig-eqm-comparison
+#| fig-cap: "Comparação dos Erros Quadráticos Médios (EQM) dos estimadores θ̂₁ e θ̂₂ para n=10."
+#| warning: false
+
+library(ggplot2)
+library(tidyr)
+
+n <- 10
+
+theta <- seq(0, 10, by = 0.1)
+
+# Calcular os EQMs para cada valor de theta
+eqm1 <- theta^2 * (1 + 2 * n) / (18 * n)
+eqm2 <- theta^2 / ((n + 1) * (2 * n + 1))
+
+dados_eqm <- data.frame(
+  theta = theta,
+  EQM_theta1 = eqm1,
+  EQM_theta2 = eqm2
+)
+
+dados_long <- pivot_longer(dados_eqm, 
+                           cols = c("EQM_theta1", "EQM_theta2"), 
+                           names_to = "Estimador", 
+                           values_to = "EQM")
+
+dados_long$Estimador[dados_long$Estimador == "EQM_theta1"] <- "EQM(θ̂₁) = EQM(X̄)"
+dados_long$Estimador[dados_long$Estimador == "EQM_theta2"] <- "EQM(θ̂₂) = EQM(Xₙ)"
+
+
+ggplot(dados_long, aes(x = theta, y = EQM, color = Estimador)) +
+  geom_line(linewidth = 1.2) +
+  labs(
+    title = paste("Comparação de EQM para n =", n),
+    x = "Valor do Parâmetro θ",
+    y = "Erro Quadrático Médio (EQM)",
+    color = "Estimador"
+  ) +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "bottom",
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  ) +
+  scale_color_manual(values = c("EQM(θ̂₁) = EQM(X̄)" = "#d95f02", "EQM(θ̂₂) = EQM(Xₙ)" = "#1b9e77"))
+
+```
+
+### Conclusão da Comparação
+
+Analisando as fórmulas e o gráfico, podemos tirar algumas conclusões:
+
+1.  **Coeficientes**: O comportamento do EQM em função de $\theta$ é quadrático ($k \cdot \theta^2$). A comparação se resume a comparar os coeficientes:
+    * $k_1 = \frac{1+2n}{18n} = \frac{1}{18n} + \frac{1}{9}$
+    * $k_2 = \frac{1}{(n+1)(2n+1)}$
+
+2.  **Comportamento com n**:
+    * Quando $n \to \infty$, $k_1 \to \frac{1}{9}$.
+    * Quando $n \to \infty$, $k_2 \to 0$.
+
+Isso nos mostra que, para $n$ grande, o EQM de $\hat{\theta}_2$ se aproxima de zero muito mais rápido que o EQM de $\hat{\theta}_1$. O estimador $\hat{\theta}_2 = X_{(n)}$ é, portanto, assintoticamente superior.
+
+O gráfico (Figura 1) ilustra claramente que, para $n=10$, o **EQM do estimador $\hat{\theta}_2 = X_{(n)}$ é consistentemente e significativamente menor do que o EQM do estimador $\hat{\theta}_1 = \bar{X}$** para todos os valores de $\theta > 0$. Isso indica que $\hat{\theta}_2$ é um estimador muito mais eficiente (com menor erro) do que $\hat{\theta}_1$ para este problema, apesar de ambos serem viciados.

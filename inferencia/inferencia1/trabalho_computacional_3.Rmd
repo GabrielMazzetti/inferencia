@@ -1,0 +1,308 @@
+---
+title: "Trabalho Computacional 3"
+author: "Gabriel Sanábio Mazzetti Affonso"
+date: "2025-08-01"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: TRUE
+---
+
+## Questão 1
+
+Suponha que se tenha uma amostra aleatória \( Y_1, Y_2, \dots, Y_n \) de uma variável aleatória \( Y \sim \text{Gama}(\alpha, \beta) \), com \( \alpha \) e \( \beta \) desconhecidos.
+
+Sabemos que a função de verossimilhança é dada por:
+
+\[
+L(\alpha, \beta; \mathbf{y}) = \prod_{i=1}^n \frac{\beta^\alpha}{\Gamma(\alpha)} y_i^{\alpha - 1} e^{-\beta y_i}
+\]
+
+Logo, a log-verossimilhança é:
+
+\[
+\ell(\alpha, \beta) = n\alpha \log(\beta) - n \log \Gamma(\alpha) + (\alpha - 1) \sum_{i=1}^n \log(y_i) - \beta \sum_{i=1}^n y_i
+\]
+
+### Objetivo
+
+Encontrar os estimadores de máxima verossimilhança (EMVs) de \( \alpha \) e \( \beta \), por três métodos:
+
+---
+
+## (a) Maximização direta de \( \ell(\alpha, \beta) \)
+
+Utilizamos o método `optim` do R para maximizar numericamente \( \ell(\alpha, \beta) \) nos dois parâmetros simultaneamente.
+
+### Código 1-a:
+
+```{r}
+set.seed(123)
+y <- rgamma(100, shape = 3, rate = 2)
+n <- length(y)
+
+loglik <- function(par) {
+  alpha <- par[1]
+  beta <- par[2]
+  if (alpha <= 0 || beta <= 0) return(-Inf)
+  n * alpha * log(beta) - n * lgamma(alpha) + (alpha - 1) * sum(log(y)) - beta * sum(y)
+}
+
+res_a <- optim(par = c(1, 1), fn = function(par) -loglik(par), method = "L-BFGS-B", lower = c(1e-5, 1e-5))
+res_a$par
+```
+
+## (b.1) Avaliação gráfica da log-verossimilhança perfilada
+
+Neste item, fixamos diversos valores para \( \alpha \) e, para cada um, encontramos o estimador de máxima verossimilhança de \( \beta \), dado por:
+
+\[
+\hat{\beta}(\alpha) = \frac{n\alpha}{\sum_{i=1}^n y_i}
+\]
+
+A seguir, substituímos \( \hat{\beta}(\alpha) \) na log-verossimilhança:
+
+\[
+\ell(\alpha, \hat{\beta}(\alpha)) = n\alpha \log\left( \frac{n\alpha}{\sum y_i} \right) - n \log \Gamma(\alpha) + (\alpha - 1)\sum \log(y_i) - \frac{n\alpha}{\sum y_i} \sum y_i
+\]
+
+E avaliamos essa função para um grid de valores de \( \alpha \), como de 0.1 a 6, em incrementos de 0.1.
+
+### Código 1-b1:
+
+```{r}
+
+set.seed(123)
+y <- rgamma(100, shape = 3, rate = 2)
+n <- length(y)
+
+loglik <- function(par) {
+  alpha <- par[1]
+  beta <- par[2]
+  if (alpha <= 0 || beta <= 0) return(-Inf)
+  n * alpha * log(beta) - n * lgamma(alpha) + (alpha - 1) * sum(log(y)) - beta * sum(y)
+}
+
+alpha_seq <- seq(0.1, 6, by = 0.1)
+loglik_vals <- numeric(length(alpha_seq))
+
+for (i in seq_along(alpha_seq)) {
+  alpha <- alpha_seq[i]
+  beta_hat <- n * alpha / sum(y)
+  loglik_vals[i] <- loglik(c(alpha, beta_hat))
+}
+
+plot(alpha_seq, loglik_vals, type = "l", col = "orange", lwd = 2,
+     xlab = expression(alpha),
+     ylab = expression(ell(alpha, hat(beta))),
+     main = "Log-verossimilhança perfilada")
+```
+
+
+## (b.2) Maximização numérica da log-verossimilhança perfilada
+
+Neste item, buscamos maximizar numericamente a log-verossimilhança perfilada \( \ell(\alpha, \hat{\beta}(\alpha)) \), ou seja, a função de log-verossimilhança com \( \beta \) substituído por seu estimador de máxima verossimilhança, dado \( \alpha \).
+
+Sabemos que:
+
+\[
+\hat{\beta}(\alpha) = \frac{n\alpha}{\sum_{i=1}^n y_i}
+\]
+
+Substituindo esse valor na log-verossimilhança original, obtemos:
+
+\[
+\ell(\alpha, \hat{\beta}(\alpha)) = n\alpha \log\left( \frac{n\alpha}{\sum y_i} \right) - n \log \Gamma(\alpha) + (\alpha - 1)\sum \log(y_i) - n\alpha
+\]
+
+Nosso objetivo é encontrar o valor de \( \alpha \) que **maximiza** essa expressão. Para isso, usamos a função `optim()` em R.
+
+---
+
+### Código 1-b2:
+
+```{r}
+set.seed(123)
+y <- rgamma(100, shape = 3, rate = 2)
+n <- length(y)
+
+loglik <- function(par) {
+  alpha <- par[1]
+  beta <- par[2]
+  if (alpha <= 0 || beta <= 0) return(-Inf)
+  n * alpha * log(beta) - n * lgamma(alpha) + (alpha - 1) * sum(log(y)) - beta * sum(y)
+}
+
+loglik_profile <- function(alpha) {
+  if (alpha <= 0) return(-Inf)
+  beta_hat <- n * alpha / sum(y)
+  loglik(c(alpha, beta_hat))
+}
+
+res_b2 <- optim(par = 1, fn = function(alpha) -loglik_profile(alpha),
+                method = "L-BFGS-B", lower = 1e-5)
+
+
+alpha_hat_b2 <- res_b2$par
+beta_hat_b2 <- n * alpha_hat_b2 / sum(y)
+
+cat("Estimativas perfiladas:\n")
+cat("alpha =", alpha_hat_b2, "\n")
+cat("beta =", beta_hat_b2, "\n")
+
+```
+
+
+## Questão 2 — Estimação de Máxima Verossimilhança via Algoritmos Iterativos
+
+Nesta questão, estudamos a estimação de parâmetros por máxima verossimilhança em casos onde **não existem soluções analíticas fechadas**. Para isso, utilizamos algoritmos numéricos de otimização (como o `optim()` no R) para maximizar a função de log-verossimilhança.
+
+---
+
+### 2.1 — Distribuição de Cauchy
+
+Seja \( X_1, X_2, \dots, X_n \sim \text{Cauchy}(\theta, \gamma) \), onde:
+
+- \( \theta \in \mathbb{R} \) é o **parâmetro de localização**
+- \( \gamma > 0 \) é o **parâmetro de escala**
+
+A função densidade de probabilidade (fdp) da distribuição de Cauchy é:
+
+\[
+f(x; \theta, \gamma) = \frac{1}{\pi \gamma \left[ 1 + \left( \frac{x - \theta}{\gamma} \right)^2 \right]}
+\]
+
+A função de **log-verossimilhança** para uma amostra \( x_1, \dots, x_n \) é:
+
+\[
+\ell(\theta, \gamma) = -n \log(\pi \gamma) - \sum_{i=1}^n \log\left[ 1 + \left( \frac{x_i - \theta}{\gamma} \right)^2 \right]
+\]
+
+Como essa função **não admite solução analítica para o máximo**, utilizamos **algoritmos iterativos** para encontrar os valores de \( \theta \) e \( \gamma \) que maximizam \( \ell \).
+
+---
+
+### Código 2.1 — Estimando \( \theta \) e \( \gamma \) via `optim()`
+
+```{r}
+
+set.seed(42)
+x <- rcauchy(100, location = 2, scale = 1)  # Cauchy(θ=2, γ=1)
+
+# Função de log-verossimilhança da Cauchy
+loglik_cauchy <- function(par) {
+  theta <- par[1]
+  gamma <- par[2]
+  if (gamma <= 0) return(-Inf)
+  -length(x) * log(pi * gamma) - sum(log(1 + ((x - theta) / gamma)^2))
+}
+
+# Otimização numérica para encontrar os EMVs
+res <- optim(par = c(median(x), 1), fn = function(par) -loglik_cauchy(par),
+             method = "L-BFGS-B", lower = c(-Inf, 1e-6))
+
+theta_hat <- res$par[1]
+gamma_hat <- res$par[2]
+
+cat("Estimativas por Máxima Verossimilhança:\n")
+cat("theta =", theta_hat, "\n")
+cat("gamma =", gamma_hat, "\n")
+```
+
+
+## Questão 2.2 — Estimação por Máxima Verossimilhança com Newton-Raphson
+
+Seja \( X \) uma variável aleatória contínua com a seguinte função densidade de probabilidade (fdp):
+
+\[
+f(x|\theta) = \frac{1}{2}(1 + \theta x), \quad -1 \leq x \leq 1, \quad -1 \leq \theta \leq 1
+\]
+
+Dada uma amostra aleatória \( x_1, x_2, \dots, x_n \) de \( X \), o objetivo é obter um estimador de máxima verossimilhança (EMV) de \( \theta \) usando o método **Newton-Raphson**.
+
+---
+
+### Log-verossimilhança
+
+A função de verossimilhança é:
+
+\[
+L(\theta) = \prod_{i=1}^n f(x_i|\theta) = \prod_{i=1}^n \left( \frac{1 + \theta x_i}{2} \right)
+\]
+
+A log-verossimilhança (ignorando a constante \( -n \log 2 \)) é:
+
+\[
+\ell(\theta) = \sum_{i=1}^n \log(1 + \theta x_i)
+\]
+
+---
+
+### Derivadas (Função Escore e Hessiana)
+
+Derivando \( \ell(\theta) \):
+
+\[
+S(\theta) = \frac{d\ell}{d\theta} = \sum_{i=1}^n \frac{x_i}{1 + \theta x_i}
+\]
+
+\[
+H(\theta) = \frac{d^2\ell}{d\theta^2} = -\sum_{i=1}^n \frac{x_i^2}{(1 + \theta x_i)^2}
+\]
+
+---
+
+### Código 2.2
+
+```{r}
+
+# Dados do exemplo (Bolfarine e Sandoval, 2010)
+x <- c(0.3374, 0.9285, 0.6802, -0.2139, 0.1052,
+       -0.9793, -0.2623, -0.1964, 0.5234, -0.0349,
+       -0.6082, 0.7509, 0.3424, -0.7010, -0.2605,
+       0.4077, -0.7435, 0.9862, 0.9704, 0.5313)
+
+# Função escore (1ª derivada)
+S <- function(theta, X = x) {
+  sum(X / (1 + theta * X))
+}
+
+# Função Hessiana (2ª derivada negativa)
+H <- function(theta, X = x) {
+  sum(X^2 / (1 + theta * X)^2)
+}
+
+newton_raphson <- function(S, H, x0, tol = 1e-10, max_iter = 100) {
+  iter <- numeric()
+  theta <- x0
+  for (k in 1:max_iter) {
+    iter <- c(iter, theta)
+    delta <- S(theta) / H(theta)
+    theta_new <- theta + delta
+    if (abs(theta_new - theta) < tol) {
+      iter <- c(iter, theta_new)
+      break
+    }
+    theta <- theta_new
+  }
+  list(theta_hat = theta, iter = iter)
+}
+
+theta0 <- mean(x)
+res <- newton_raphson(S, H, x0 = theta0)
+
+L_theta <- function(t, X = x) {
+  sum(log(1 + t * X))
+}
+
+tabela <- data.frame(
+  k = seq_along(res$iter) - 1,
+  `theta^(k)` = res$iter,
+  `log L(theta^(k))` = sapply(res$iter, L_theta)
+)
+
+knitr::kable(tabela, col.names = c("k", "$\\hat\\theta^{(k)}$", "$\\ell(\\hat\\theta^{(k)})$"), digits = 6)
+```
+
+
