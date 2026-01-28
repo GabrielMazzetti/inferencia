@@ -1,1 +1,1 @@
-# inferencia
+# inferência
