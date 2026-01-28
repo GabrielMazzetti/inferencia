@@ -1,0 +1,323 @@
+---
+title: "Prova 3 - Parte 3"
+author: "Gabriel Sanábio Mazzetti Affonso"
+date: today
+format: 
+  html:
+    toc: true
+    toc-location: left
+    theme:
+      light: cosmos
+      dark: darkly
+    theme-toggle: true
+    embed-resources: true
+    code-fold: true
+    code-summary: "Exibir Código"
+    header-includes: |
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+      <style>
+        /* Cria o espaço e o ícone após o sumário */
+        #TOC::after {
+          content: "\F3ED"; /* Código do ícone GitHub no Bootstrap Icons */
+          font-family: "bootstrap-icons";
+          display: block;
+          text-align: center;
+          font-size: 2rem;
+          margin-top: 20px;
+          padding-top: 10px;
+          border-top: 1px solid #dee2e6;
+          cursor: pointer;
+        }
+        
+        /* Torna o ícone clicável */
+        #TOC {
+          position: relative;
+        }
+        
+        #TOC .github-link {
+          position: absolute;
+          bottom: -50px;
+          left: 50%;
+          transform: translateX(-50%);
+          text-decoration: none;
+          color: inherit;
+          font-size: 0.8rem;
+          text-align: center;
+          width: 100%;
+        }
+      </style>
+    include-after-body:
+      text: |
+        <script>
+        document.addEventListener("DOMContentLoaded", function() {
+          var toc = document.querySelector('#TOC');
+          if (toc) {
+            var a = document.createElement('a');
+            a.href = "https://github.com/GabrielMazzetti";
+            a.target = "_blank";
+            a.className = "github-link";
+            toc.appendChild(a);
+            
+            // Faz o ícone (gerado pelo CSS ::after) ser clicável
+            toc.addEventListener('click', function(e) {
+              if (e.offsetY > toc.offsetHeight - 50) {
+                window.open("https://github.com/GabrielMazzetti", "_blank");
+              }
+            });
+          }
+        });
+        </script>
+---
+
+# Introdução
+
+Neste trabalho, realizaremos um estudo de simulação com o objetivo de avaliar numericamente o desempenho dos testes de Wald, Escore e Razão de Verossimilhanças. O desempenho dos testes será analisado em termos de tamanho (nível de significância empírico) e poder, considerando diferentes tamanhos amostrais.
+
+Um teste será considerado adequado quando apresentar níveis empíricos próximos ao nível nominal e, simultaneamente, elevado poder sob a hipótese alternativa. Testes com taxas de rejeição superiores ao nível nominal são classificados como anticonservativos, enquanto aqueles com taxas inferiores são conservativos.
+
+### Dica de Visualização: 
+Este relatório suporta modo de leitura claro e escuro. Você pode alternar entre eles clicando no ícone de interruptor (sol/lua) localizado no **canto superior direito** da página.
+
+
+# Modelo Estatístico e Hipóteses
+
+A distribuição que me foi atribuída é a $Cauchy(\theta, 1)$. Portanto:
+
+$X_1, ..., X_n$ ~ $Cauchy(\theta, 1)$, onde $\theta$ é o parâmetro de localização e a escala é fixada em 1.
+
+As hipóteses testadas são:
+
+$H_0:\ \theta = \theta_0 \quad \text{vs} \quad H_1:\ \theta \neq \theta_0$
+
+O nível nominal adotado é 5%.
+
+# Log-Verossimilhança e Estimação
+
+A função log-verossimilhança associada ao modelo Cauchy é dada por:
+
+$l(\theta) = -nlog(\pi) - \sum_{i=1}^{n}{log(1 + (x_i - \theta)^2)}$
+
+O estimador de máxima verossimilhança (EMV) de $\theta$ não possui forma fechada, sendo obtido numericamente.
+
+```{r}
+loglik <- function(theta, x) {
+-sum(log(1 + (x - theta)^2))
+}
+```
+
+# Estatísticas de Teste
+
+## Teste de Wald
+
+O teste de Wald baseia-se na distância entre o estimador de máxima verossimilhança do parâmetro de interesse e o valor especificado sob a hipótese nula, ponderada por uma estimativa da variância assintótica do estimador. A ideia central do teste é verificar se a estimativa obtida a partir dos dados está suficientemente distante do valor hipotetizado, levando em conta a incerteza associada à estimação.
+
+Sob condições regulares, a estatística de Wald converge assintoticamente para uma distribuição Qui-Quadrado com número de graus de liberdade igual ao número de restrições impostas pela hipótese nula. Apesar de sua simplicidade computacional, o teste de Wald pode apresentar desempenho insatisfatório em amostras pequenas ou em modelos com distribuições de cauda pesada, como a distribuição Cauchy, sendo frequentemente observado comportamento anticonservativo nesses cenários.
+
+```{r}
+wald_test <- function(x, theta0 = 0) {
+theta_hat <- optimize(loglik, c(-20, 20), x = x, maximum = TRUE)$maximum
+W <- (theta_hat - theta0)^2 / (2 / length(x))
+return(W)
+}
+```
+
+## Teste de Escore
+
+O teste de Escore, também conhecido como teste do multiplicador de Lagrange, avalia a adequação da hipótese nula utilizando apenas informações calculadas sob a própria hipótese nula. A estatística do teste é construída a partir da função escore, que corresponde à derivada da log-verossimilhança em relação ao parâmetro de interesse, e da matriz de informação de Fisher avaliada no valor especificado pela hipótese nula.
+
+Uma característica importante do teste de Escore é que ele não requer a estimação do parâmetro sob a hipótese alternativa, o que pode representar uma vantagem computacional em determinados contextos. Assintoticamente, a estatística do teste também converge para uma distribuição Qui-Quadrado com graus de liberdade iguais ao número de restrições. Em estudos de simulação, o teste de Escore costuma apresentar níveis empíricos mais próximos do nível nominal quando comparado ao teste de Wald, especialmente em amostras de tamanho moderado.
+
+```{r}
+score_test <- function(x, theta0 = 0) {
+U <- sum(2 * (x - theta0) / (1 + (x - theta0)^2))
+I <- length(x) / 2
+E <- U^2 / I
+return(E)
+}
+```
+
+## Teste da Razão de Verossimilhanças
+
+O teste da Razão de Verossimilhanças compara diretamente a qualidade do ajuste do modelo sob a hipótese nula e sob a hipótese alternativa. A estatística do teste é construída a partir da diferença entre os valores máximos da log-verossimilhança nos dois cenários, medindo o quanto o modelo irrestrito melhora o ajuste em relação ao modelo restrito.
+
+Sob condições gerais, a estatística da Razão de Verossimilhanças converge assintoticamente para uma distribuição Qui-Quadrado, com graus de liberdade determinados pela diferença entre as dimensões dos espaços paramétricos sob a hipótese alternativa e a hipótese nula. Em geral, este teste apresenta bom desempenho tanto em termos de tamanho quanto de poder, sendo frequentemente considerado o mais robusto entre os três testes, especialmente em situações envolvendo distribuições não regulares ou de caudas pesadas.
+
+```{r}
+lr_test <- function(x, theta0 = 0) {
+theta_hat <- optimize(loglik, c(-20, 20), x = x, maximum = TRUE)$maximum
+Q <- 2 * (loglik(theta_hat, x) - loglik(theta0, x))
+return(Q)
+}
+```
+
+
+# Estudo de Simulação
+
+O estudo de Monte Carlo é conduzido com 5000 réplicas independentes para cada cenário. Os tamanhos amostrais considerados são 10, 50, 100, 500, 1000, 5000, 10000.
+
+```{r}
+n_vec <- c(10, 50, 100, 500, 1000, 5000, 10000)
+```
+
+## Nível de Significância Empírico
+
+Sob a hipótese nula $H_0: \theta = 0$ (equivalente à $H_0: \theta = \theta_0$, por conta da invariância por translação do modelo $Cauchy$), estimamos a taxa de rejeição empírica dos testes.
+
+```{r}
+sim_size <- function(n, R = 5000) {
+w <- e <- q <- numeric(R)
+
+
+for (i in 1:R) {
+x <- rcauchy(n, location = 0, scale = 1)
+w[i] <- wald_test(x)
+e[i] <- score_test(x)
+q[i] <- lr_test(x)
+}
+
+
+c(
+Wald = mean(w > qchisq(0.95, 1)),
+Score = mean(e > qchisq(0.95, 1)),
+LR = mean(q > qchisq(0.95, 1))
+)
+}
+
+size_results <- t(sapply(n_vec, sim_size))
+
+size_df <- data.frame(
+  n = n_vec,
+  Wald  = size_results[, "Wald"],
+  Score = size_results[, "Score"],
+  LR    = size_results[, "LR"]
+)
+
+library(knitr)
+kable(size_df, 
+      digits = 4, 
+      col.names = c("n", "Wald", "Escore", "Razão de Veross."),
+      caption = "Nível de Significância Empírico (alpha = 0,05) sob H0: theta = 0",
+      align = "c")
+
+```
+
+## Poder do Teste
+
+O poder do teste é avaliado sob a hipótese alternativa para diferentes valores do parâmetro $\theta$.
+
+```{r}
+sim_power <- function(n, theta, R = 5000) {
+w <- e <- q <- numeric(R)
+
+
+for (i in 1:R) {
+x <- rcauchy(n, location = theta, scale = 1)
+w[i] <- wald_test(x)
+e[i] <- score_test(x)
+q[i] <- lr_test(x)
+}
+
+
+c(
+Wald = mean(w > qchisq(0.95, 1)),
+Score = mean(e > qchisq(0.95, 1)),
+LR = mean(q > qchisq(0.95, 1))
+)
+}
+
+# Definindo o cenário para o Poder (ex: theta = 0.5)
+theta_alternativo <- 0.5
+
+power_results <- t(sapply(n_vec, function(n) sim_power(n, theta = theta_alternativo)))
+
+power_df <- data.frame(
+  n = n_vec,
+  Wald  = power_results[, "Wald"],
+  Score = power_results[, "Score"],
+  LR    = power_results[, "LR"]
+)
+
+knitr::kable(power_df, 
+             digits = 4, 
+             caption = paste("Poder do Teste sob H1 (theta =", theta_alternativo, ")"))
+```
+
+# Avaliação Assintótica
+
+Sob $H_0$, as estatísticas dos testes convergem assintoticamente para uma distribuição Qui-Quadrado com 1 grau de liberdade.
+
+## Comparação Gráfica e Teste de Kolmogorov-Smirnov
+
+```{r, warning=FALSE}
+# Selecionando o cenário de maior convergência (n = 10000)
+n_conv <- 10000
+R_conv <- 5000
+w_stat <- e_stat <- q_stat <- numeric(R_conv)
+for (i in 1:R_conv) {
+  x_sim <- rcauchy(n_conv, location = 0, scale = 1)
+  w_stat[i] <- wald_test(x_sim)
+  e_stat[i] <- score_test(x_sim)
+  q_stat[i] <- lr_test(x_sim)
+}
+
+# 1. Teste de Kolmogorov-Smirnov
+ks_wald <- ks.test(w_stat, "pchisq", df = 1)
+ks_score <- ks.test(e_stat, "pchisq", df = 1)
+ks_lr <- ks.test(q_stat, "pchisq", df = 1)
+
+ks_results <- data.frame(
+  Teste = c("Wald", "Escore", "Razão de Veross."),
+  Estatística_KS = c(ks_wald$statistic, ks_score$statistic, ks_lr$statistic),
+  p_valor = c(ks_wald$p.value, ks_score$p.value, ks_lr$p.value)
+)
+
+knitr::kable(ks_results, digits = 4, caption = "Teste de Kolmogorov-Smirnov (n=10000)")
+
+# gráficos
+library(ggplot2)
+library(tidyr)
+
+df_stats <- data.frame(
+  Wald = w_stat,
+  Escore = e_stat,
+  `Razão de Verossimilhança` = q_stat
+)
+
+df_long <- pivot_longer(df_stats, cols = everything(), 
+                        names_to = "Teste", values_to = "Valor")
+
+ggplot(df_long, aes(x = Valor)) +
+  # Linha da FDA Empírica
+  stat_ecdf(aes(color = "Empírica"), size = 0.8) +
+  # Linha da FDA Teórica (Qui-Quadrado com 1 g.l.)
+  stat_function(fun = pchisq, args = list(df = 1), 
+                aes(color = "Teórica (Qui-Quadrado)"), 
+                size = 0.8, linetype = "dashed") +
+  
+  facet_wrap(~Teste, scales = "free_x") +
+  
+  scale_color_manual(values = c("Empírica" = "#2c3e50", 
+                                "Teórica (Qui-Quadrado)" = "#e74c3c")) +
+  labs(
+    title = "Avaliação da Convergência Assintótica",
+    subtitle = "Comparação entre a FDA empírica (n=10000) e a distribuição Qui-Quadrado teórica",
+    x = "Estatística de Teste", 
+    y = "FDA",
+    color = "Distribuição",
+    caption = "Fonte: Simulação de Monte Carlo (5000 réplicas)"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom",
+        strip.text = element_text(face = "bold", size = 11))
+```
+
+# Conclusão
+
+- Tamanho do Teste e Amostras Pequenas: Para amostras pequenas ($n=10$), o Teste de Wald demonstrou um comportamento marcadamente anticonservativo, com níveis de significância empíricos significativamente superiores ao nível nominal de 5% (aproximadamente 9%). Isso ocorre porque a aproximação parabólica da log-verossimilhança, na qual o Wald se baseia, é imprecisa em regiões de caudas pesadas como as da distribuição Cauchy. Em contraste, o Teste de Escore mostrou-se o mais estável nesse cenário, mantendo o nível empírico mais próximo de 0,05.
+
+- Poder dos Testes: No que tange ao poder, observou-se que a Razão de Verossimilhanças (RV) e o Escore apresentam um equilíbrio superior entre erro Tipo I e Tipo II. Embora o Wald apresente um "poder" aparentemente alto em amostras minúsculas, esse resultado é espúrio, decorrente da sua incapacidade de controlar o tamanho do teste. Conforme $n$ aumenta, a taxa de rejeição sob a hipótese alternativa converge rapidamente para 1 em todos os casos, confirmando a consistência dos três procedimentos.
+
+- Validação Assintótica: A análise gráfica da FDA empírica sobreposta à teórica e a aplicação do teste de Kolmogorov-Smirnov confirmaram a convergência das estatísticas para uma distribuição Qui-Quadrado com 1 grau de liberdade. O fato de o p-valor do teste KS ser superior ao nível de significância usual (para $n$ grande) fornece evidência estatística sólida de que a teoria assintótica de Wilks é válida para o modelo Cauchy, apesar de sua natureza não-regular em outros contextos (como a inexistência de momentos).
+
+- Recomendação Prática: Em suma, os três testes mostram-se equivalentes em grandes amostras. No entanto, para situações de escassez de dados ou modelos com distribuições de caudas pesadas, o teste da Razão de Verossimilhanças e o Teste de Escore devem ser preferidos, dado que o teste de Wald falha em manter a probabilidade do erro Tipo I sob controle.
+
